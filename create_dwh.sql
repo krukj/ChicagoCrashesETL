@@ -1,27 +1,29 @@
 -- fact_crash
 CREATE TABLE
     fact_crash (
-        fact_crash_id NVARCHAR (150) NOT NULL PRIMARY KEY, -- id maja dlugosc ponad 120 
-        crash_date_id NVARCHAR (150) NOT NULL,
-        date_police_notified_id NVARCHAR (150) NOT NULL,
-        location_id NVARCHAR (150) NOT NULL,
+        fact_crash_id BIGINT NOT NULL PRIMARY KEY, -- id maja dlugosc ponad 120 
+        crash_date_id INT NOT NULL,
+        date_police_notified_id INT NOT NULL,
+        location_id BIGINT NOT NULL,
         -- trzeba stworzyc surrogate key,moze zmniejszyc wtedy dlugosc id ? 
-        vehicle_id NVARCHAR (150) NOT NULL,
-        person_id NVARCHAR (150) NOT NULL,
-        crash_info_id NVARCHAR (150) NOT NULL,
-        num_units INTEGER NOT NULL,
-        injuries_total INTEGER NOT NULL,
-        injuries_fatal INTEGER NOT NULL,
-        injuries_incapacitating INTEGER NOT NULL,
-        injuries_non_incapacitating INTEGER NOT NULL,
-        injuries_reported_not_evident INTEGER NOT NULL,
-        injuries_no_indication INTEGER NOT NULL,
-        injuries_unknown INTEGER NOT NULL,
+        -- co? ~ Tomek
+        vehicle_id BIGINT NOT NULL,
+        person_id BIGINT NOT NULL,
+        crash_info_id BIGINT NOT NULL,
+        num_units INT NOT NULL,
+        injuries_total INT NOT NULL,
+        injuries_fatal INT NOT NULL,
+        injuries_incapacitating INT NOT NULL,
+        injuries_non_incapacitating INT NOT NULL,
+        injuries_reported_not_evident INT NOT NULL,
+        injuries_no_indication INT NOT NULL,
+        injuries_unknown INT NOT NULL,
         CONSTRAINT fk_crash_info FOREIGN KEY (crash_info_id) REFERENCES dim_crash_info (crash_info_id),
         CONSTRAINT fk_crash_date_id FOREIGN KEY (crash_date_id) REFERENCES dim_date (date_id),
         CONSTRAINT fk_date_police_notified_id FOREIGN KEY (date_police_notified_id) REFERENCES dim_date (date_id),
         CONSTRAINT fk_location_id FOREIGN KEY (location_id) REFERENCES dim_location (location_id),
-        CONSTRAINT fk_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES dim_vehicle (vehicle_id)
+        CONSTRAINT fk_vehicle_id FOREIGN KEY (vehicle_id) REFERENCES dim_vehicle (vehicle_id),
+        CONSTRAINT fk_person_id FOREIGN KEY (person_id) REFERENCES dim_person (person_id)
     );
 
 -- dim_crash_info
@@ -43,10 +45,10 @@ CREATE TABLE
         second_contributory_cause NVARCHAR (50) NOT NULL,
         most_severe_injury NVARCHAR (50) NOT NULL,
         speedlimit INTEGER NOT NULL,
-        intersection_related NVARCHAR (50) NULL, -- bardzo duzo missing,moze wywalic ? 
-        hit_and_run NVARCHAR (50) NULL, --to samo 
-        photos_taken NVARCHAR (50) NULL, --to samo 
-        statements_taken NVARCHAR (50) NULL -- to samo
+        -- te dalej to z vehicle
+        travel_direction NVARCHAR (10),
+        maneuver NVARCHAR (50),
+        first_contact_point NVARCHAR (50)
     );
 
 -- dim_location
@@ -65,8 +67,6 @@ CREATE TABLE
     dim_person (
         person_id NVARCHAR (150) NOT NULL PRIMARY KEY,
         person_type NVARCHAR (50) NOT NULL,
-        city NVARCHAR (50) NULL,
-        -- city of residence state NVARCHAR (50) NULL,
         zip_code NVARCHAR (50) NULL,
         sex VARCHAR(1) NULL,
         age INTEGER NULL,
@@ -82,10 +82,39 @@ CREATE TABLE
     )
     --dim_vehicle
 CREATE TABLE
-    dim_vehicle (vehicle_id BIGINT NOT NULL PRIMARY KEY)
+    dim_vehicle (
+        vehicle_id BIGINT NOT NULL PRIMARY KEY,
+        make NVARCHAR (50) NOT NULL,
+        model NVARCHAR (50) NOT NULL,
+        year INT NOT NULL,
+        defect NVARCHAR (50) NOT NULL,
+        type NVARCHAR (50) NOT NULL
+    )
     --fact_weather
 CREATE TABLE
-    fact_weather (weather_id BIGINT NOT NULL PRIMARY KEY) -- moze tutaj dodac kolumne lighting_condition z crashes ? / / dim_date
+    fact_weather (
+        weather_id BIGINT NOT NULL PRIMARY KEY,
+        date_id INT NOT NULL,
+        temp decimal(3, 2) NOT NULL,
+        feelslike decimal(3, 2) NOT NULL,
+        dew decimal(3, 2) NOT NULL,
+        humidity decimal(3, 2) NOT NULL,
+        precip decimal(3, 2) NOT NULL,
+        precipprob decimal(3, 2) NOT NULL,
+        preciptype NVARCHAR (50) NULL,
+        snow decimal(3, 2) NOT NULL,
+        snowdepth decimal(3, 2) NOT NULL,
+        windgust decimal(3, 2) NULL,
+        windspeed decimal(3, 2) NULL,
+        winddir INT NOT NULL,
+        sealevelpressure decimal(5, 2) NOT NULL,
+        cloudcover decimal(5, 2) NOT NULL,
+        visibility decimal(5, 2) NOT NULL,
+        solarradiation int NOT NULL,
+        solarenergy decimal(3, 2) NOT NULL,
+        uvindex int NOT NULL,
+        conditions NVARCHAR (50) NOT NULL
+    )
 CREATE TABLE
     dim_date (date_id INT NOT NULL PRIMARY KEY)
     -- KOMENTARZE 
