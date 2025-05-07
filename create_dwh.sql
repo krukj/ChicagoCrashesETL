@@ -116,8 +116,23 @@ CREATE TABLE
         conditions NVARCHAR (50) NOT NULL
     )
 CREATE TABLE
-    dim_date (date_id INT NOT NULL PRIMARY KEY)
-    -- KOMENTARZE 
-    -- moze zastanowic sie czy by nie wywalic czesci kolumn ktore beda bezuzyteczne 
-    -- - wywalic kolumny gdzie jest duzo missingow ? np intersection_related 
-    -- - ew zmniejszyc liczbe w NVARCHAR (50) na mniejsza ale idk
+    dim_date (
+        date_id INT NOT NULL PRIMARY KEY, -- Surrogate key (np. 20240507)
+        full_date DATE NOT NULL, -- Pełna data (YYYY-MM-DD)
+        year SMALLINT NOT NULL, -- Rok (np. 2024)
+        quarter TINYINT NOT NULL, -- Kwartał (1-4)
+        month TINYINT NOT NULL, -- Miesiąc (1-12)
+        month_name NVARCHAR (10) NOT NULL, -- Nazwa miesiąca (np. 'May')
+        day_of_month TINYINT NOT NULL, -- Dzień miesiąca (1-31)
+        day_of_week TINYINT NOT NULL, -- Dzień tygodnia (1=Monday, 7=Sunday)
+        day_name NVARCHAR (10) NOT NULL, -- Nazwa dnia tygodnia (np. 'Tuesday')
+        is_weekend BIT NOT NULL, -- Czy to weekend (1/0)
+        week_of_year TINYINT NOT NULL, -- Numer tygodnia w roku (1-53)
+        is_holiday BIT NOT NULL DEFAULT 0, -- Czy to święto (0 domyślnie)
+        holiday_name NVARCHAR (50) NULL -- Nazwa święta jeśli występuje
+    );
+
+-- KOMENTARZE 
+-- moze zastanowic sie czy by nie wywalic czesci kolumn ktore beda bezuzyteczne 
+-- - wywalic kolumny gdzie jest duzo missingow ? np intersection_related 
+-- - ew zmniejszyc liczbe w NVARCHAR (50) na mniejsza ale idk
