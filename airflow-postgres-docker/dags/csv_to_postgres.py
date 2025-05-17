@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+
 import pandas as pd
 import os
+from datetime import datetime, timedelta
 
 default_args = {
     'owner': 'airflow',
@@ -13,19 +14,29 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-def load_csv_to_postgres():
-    # Ścieżka do pliku CSV
-    csv_path = os.path.join(os.path.dirname(__file__), 'sample_data.csv')
-    
-    # Wczytanie danych z CSV
-    df = pd.read_csv(csv_path)
-    
-    # Połączenie z PostgreSQL
+BASE_PATH = os.path.dirname(__file__)
+EXTRACT_PATH = os.path.join(BASE_PATH, 'extracted.pkl')
+TRANSFORMED_PATH = os.path.join(BASE_PATH, 'transformed.pkl')
+CSV_PATH = os.path.join(BASE_PATH, 'sample_data.csv')
+
+def extract():
+    df = pd.read_csv(CSV_PATH)
+    df.to_pickle(EXTRACT_PATH)
+    print(f"Extracted {len(df)} rows")
+
+def transform():
+    df = pd.read_pickle(EXTRACT_PATH)
+    df.drop_duplicates(subset='id', inplace=True)
+    df['email'] = df['email'].str.lower()
+    df.to_pickle(TRANSFORMED_PATH)
+    print(f"Transformed to {len(df)} unique rows.")
+
+def load():
+    df = pd.read_pickle(TRANSFORMED_PATH)
     hook = PostgresHook(postgres_conn_id='postgres_default')
     conn = hook.get_conn()
     cursor = conn.cursor()
-    
-    # Utworzenie tabeli jeśli nie istnieje
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY,
@@ -33,33 +44,47 @@ def load_csv_to_postgres():
             age INTEGER,
             email TEXT
         )
-    """)
-    
-    # Wstawienie danych
+                   """)
+
     for _, row in df.iterrows():
         cursor.execute(
             "INSERT INTO users (id, name, age, email) VALUES (%s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
             (row['id'], row['name'], row['age'], row['email'])
         )
-    
+
     conn.commit()
     cursor.close()
     conn.close()
-    
-    print(f"Successfully loaded {len(df)} records to PostgreSQL")
+    print(f"-----------------------------------")
+    print(f"Loaded {len(df)} rows into database")
+    print(f"At time {datetime.now()}")
+    print(f"-----------------------------------")
+
 
 with DAG(
-    'csv_to_postgres',
+    'csv_to_postgres_etl',
     default_args=default_args,
     description='Load CSV data to PostgreSQL every 5 minutes',
-    schedule_interval='*/5 * * * *',
+    schedule_interval='@daily',
     catchup=False,
-    tags=['example'],
+    tags=['example', 'etl'],
 ) as dag:
-    
-    load_task = PythonOperator(
-        task_id='load_csv_to_postgres',
-        python_callable=load_csv_to_postgres,
+
+    extract_task = PythonOperator(
+        task_id='extract',
+        python_callable=extract
     )
 
-    load_task
+    transform_task = PythonOperator(
+        task_id='transform',
+        python_callable=transform
+    )
+
+    load_task = PythonOperator(
+        task_id='load',
+        python_callable=load
+    )
+
+
+    extract_task >> transform_task >> load_task
+    
