@@ -1,6 +1,8 @@
-id,name,age,email
-1,Jan Kowalski,30,jan@example.com
-2,Anna Nowak,28,anna@example.com
-3,Piotr Wiśniewski,35,piotr@example.com
-4,Maria Wójcik,42,maria@example.com
-5,Tomasz Lewandowski,26,tomasz@example.com
+id,name,age,email,created_at
+1,Jan Kowalski,30,jan@example.com, 2025-05-01 12:00:00
+2,Anna Nowak,28,anna@example.com, 2025-05-02 13:00:00 
+3,Piotr Wiśniewski,35,piotr@example.com, 2025-05-03 14:00:00
+4,Maria Wójcik,42,maria@example.com, 2025-05-04 15:00:00
+5,Tomasz Lewandowski,26,tomasz@example.com, 2025-05-05 16:00:00
+6,Katarzyna Zielińska,31,katarzyna@example.com, 2025-05-06 17:00:00
+7,Julia Gołąb,21,julka293@gmailcom, 2025-05-18 00:24:00

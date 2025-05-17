@@ -38,27 +38,73 @@ def load():
     cursor = conn.cursor()
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS staging.users (
+            id INTEGER,
+            name TEXT,
+            age INTEGER,
+            email TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("TRUNCATE staging.users")
+
+    for _, row in df.iterrows():
+        cursor.execute("""
+            INSERT INTO staging.users (id, name, age, email, created_at)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (row['id'], row['name'], row['age'], row['email'], row['created_at']))
+    
+    conn.commit()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS core.users (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             age INTEGER,
-            email TEXT
+            email TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-                   """)
+    """)
 
-    for _, row in df.iterrows():
-        cursor.execute(
-            "INSERT INTO users (id, name, age, email) VALUES (%s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
-            (row['id'], row['name'], row['age'], row['email'])
-        )
+    cursor.execute("TRUNCATE core.users")
+
+    cursor.execute("""
+        INSERT INTO core.users (id, name, age, email, created_at)
+        SELECT id, name, age, email, created_at FROM staging.users
+    """)
 
     conn.commit()
     cursor.close()
     conn.close()
-    print(f"-----------------------------------")
-    print(f"Loaded {len(df)} rows into database")
-    print(f"At time {datetime.now()}")
-    print(f"-----------------------------------")
+    print(f"Loaded {len(df)} rows from staging to core.")
+
+def aggregate_to_analytics():
+    hook = PostgresHook(postgres_conn_id='postgres_default')
+    conn = hook.get_conn()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS analytics.daily_user_count (
+                       date DATE PRIMARY KEY,
+                       user_count INTEGER
+                   )
+    """)
+
+    # To średnio optymalne, ale dla tego przykładu wystarczy 😉🤠
+    cursor.execute("TRUNCATE analytics.daily_user_count")
+
+    cursor.execute("""
+        INSERT INTO analytics.daily_user_count (date, user_count)
+        SELECT created_at::date, COUNT(*) FROM core.users
+        GROUP BY created_at::date
+        """)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    print("Aggregated daily user count.")
 
 
 with DAG(
@@ -85,6 +131,11 @@ with DAG(
         python_callable=load
     )
 
+    aggregate_task = PythonOperator(
+        task_id='aggregate_to_analytics',
+        python_callable=aggregate_to_analytics
+    )
 
-    extract_task >> transform_task >> load_task
+
+    extract_task >> transform_task >> load_task >> aggregate_task
     
