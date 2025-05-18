@@ -55,7 +55,7 @@ CREATE TABLE
     dim_person (
         person_id BIGINT PRIMARY KEY,
         person_type VARCHAR(50) NOT NULL,
-        zip_code VARCHAR(50),
+        -- zip_code VARCHAR(50),
         sex VARCHAR(1),
         age INTEGER,
         safety_equipment VARCHAR(50),
@@ -83,6 +83,9 @@ CREATE TABLE
         year INT NOT NULL,
         defect VARCHAR(50) NOT NULL,
         type VARCHAR(50) NOT NULL
+        -- może vehicle use
+        -- defect
+        -- occupant_count (ile osób bez kierowcy) ew to do fact_crash
     );
 
 -- fact_crash

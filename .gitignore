@@ -1,2 +1,3 @@
 airflow-postgres-docker/logs
 data/crashes_data/*
+**/__pycache__/*
