@@ -139,7 +139,4 @@ CREATE TABLE
         conditions NVARCHAR (50) NOT NULL,
         CONSTRAINT fk_date_id FOREIGN KEY (date_id) REFERENCES dim_date (date_id)
     )
-    -- KOMENTARZE 
-    -- moze zastanowic sie czy by nie wywalic czesci kolumn ktore beda bezuzyteczne 
-    -- - wywalic kolumny gdzie jest duzo missingow ? np intersection_related 
-    -- - ew zmniejszyc liczbe w NVARCHAR (50) na mniejsza ale idk
+    -- KOMENTARZE

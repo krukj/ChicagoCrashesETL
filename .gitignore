@@ -1,1 +1,2 @@
 airflow-postgres-docker/logs
+data/crashes_data/*
