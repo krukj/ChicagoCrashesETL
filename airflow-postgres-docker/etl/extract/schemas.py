@@ -58,7 +58,7 @@ EXPECTED_PEOPLE_COLUMNS = {
 "PERSON_TYPE",
 "CRASH_RECORD_ID",
 "VEHICLE_ID",
-"CRASH_DATE",
+# "CRASH_DATE",          # nie potrzebujemy chyba bo to mamy w crashes a się łączą po CRASH_RECORD_ID
 # "SEAT_NO",             # nulli dużo
 # "CITY",                # nulli z 27% ale nie potrzebujemy chyba tego (ew można dać)
 # "STATE",               # to co wyżej

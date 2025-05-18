@@ -19,7 +19,7 @@ def extract_crashes_csv(filepath: str) -> pd.DataFrame:
 
 
 def extract_people_csv(filepath: str) -> pd.DataFrame:
-    df = pd.read_csv(filepath, low_memory=False) # low_memory=False to avoid DtypeWarning
+    df = pd.read_csv(filepath, low_memory=False) # low_memory=False żeby nie było DtypeWarning
 
     print("--------------------------------------------------------------------------------")
     validate_columns(df, EXPECTED_PEOPLE_COLUMNS, "extract_people")
@@ -30,7 +30,7 @@ def extract_people_csv(filepath: str) -> pd.DataFrame:
     return df
 
 def extract_vehicles_csv(filepath: str) -> pd.DataFrame:
-    df = pd.read_csv(filepath, low_memory=False) # low_memory=False to avoid DtypeWarning
+    df = pd.read_csv(filepath, low_memory=False) # low_memory=False żeby nie było DtypeWarning
     print("--------------------------------------------------------------------------------")
     validate_columns(df, EXPECTED_VEHICLES_COLUMNS, "extract_vehicles")
     print(f"[extract_vehicles] Wczytano {len(df)} rekordów z {os.path.basename(filepath)}")
@@ -66,19 +66,21 @@ def extract_weather_csv(dirpath: str) -> pd.DataFrame:
         
 
 def main():
-    # Example usage
-    print(os.getcwd())
-    print(__file__)
+    # print(os.getcwd())
+    # print(__file__)
 
-    weather_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "weather_data")
-    crashes_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_Crashes.csv")
-    people_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_People.csv")
-    vehicles_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_Vehicles.csv")
+    # weather_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "weather_data")
+    # crashes_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_Crashes.csv")
+    # people_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_People.csv")
+    # vehicles_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_Vehicles.csv")
 
     # weather_df = extract_weather_csv(weather_path)
     # crashes_df = extract_crashes_csv(crashes_path)
-    people_df = extract_people_csv(people_path)
-    vehicles_df = extract_vehicles_csv(vehicles_path)
+    # people_df = extract_people_csv(people_path)
+    # vehicles_df = extract_vehicles_csv(vehicles_path)
+
+    # wszystko pięknie działa
+    pass
 
 
 if __name__ == "__main__":
