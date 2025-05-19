@@ -45,9 +45,9 @@ EXPECTED_CRASHES_COLUMNS = {
 "INJURIES_REPORTED_NOT_EVIDENT",
 "INJURIES_NO_INDICATION",
 "INJURIES_UNKNOWN",
-"CRASH_HOUR",
-"CRASH_DAY_OF_WEEK",
-"CRASH_MONTH",
+# "CRASH_HOUR",
+# "CRASH_DAY_OF_WEEK",
+# "CRASH_MONTH",
 "LATITUDE",
 "LONGITUDE",
 # "LOCATION",                     # to niepotrzebne bo to jest punkt (latitude, longitude)

@@ -1,3 +1,5 @@
+# tu ogólnie crash_unit_id i vehicle_id to to samo jest tylko jedno float drugie int xd ~ Tomek
+
 # CRASH_UNIT_ID - wywalic i stworzyc surrogate key vehicle_id
 # CRASH_RECORD_ID - do polaczenia 
 # CRASH_DATE - wywalic 

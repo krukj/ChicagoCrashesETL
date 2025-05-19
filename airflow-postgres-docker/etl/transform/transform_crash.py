@@ -1,3 +1,9 @@
+from .schemas import COLUMNS_TO_DROP_CRASHES, COLUMNS_TO_STRING_CRASHES, COLUMNS_TO_INT_CRASHES, COLUMNS_TO_FLOAT_CRASHES, COLUMNS_TO_DATE
+from .utils import fill_na, change_type, replace_value
+
+import pandas as pd
+from pathlib import Path
+
 # nazwy no to po prostu zmieniamy na snake_case małe litery
 # jak str są '' to UNKNOWN
 
@@ -49,3 +55,27 @@
 # LATITUDE                  float, jak null to -1 
 # LONGITUDE                 float, jak null to -1 
 # LOCATION                  wyjebać 
+
+def transform_crash(filepath_in: str) -> pd.DataFrame:
+    df = pd.read_pickle(filepath_in)
+
+    df = df.drop(columns=COLUMNS_TO_DROP_CRASHES)
+
+    # String handling
+    df = fill_na(df, COLUMNS_TO_STRING_CRASHES, 'UNKNOWN')
+    df = replace_value(df, COLUMNS_TO_STRING_CRASHES, '', 'UNKNOWN')
+    df = change_type(df, COLUMNS_TO_STRING_CRASHES, 'string')
+
+    # Int handling
+    df = fill_na(df, COLUMNS_TO_INT_CRASHES, -1)
+    df = change_type(df, COLUMNS_TO_INT_CRASHES, 'Int64')
+
+    # Float handling
+    df = fill_na(df, COLUMNS_TO_FLOAT_CRASHES, -999)
+    df = change_type(df, COLUMNS_TO_FLOAT_CRASHES, 'float32')
+
+    # TODO coś tam z datą pokminić jak najsensowniej
+
+    
+
+    

@@ -15,4 +15,3 @@
 # PHYSICAL_CONDITION - str (jak null to "UNKNOWN")
 # BAC_RESULT - str (jak null to "UNKNOWN")
 # BAC_RESULT VALUE - float -> nulli jest 99% (wtedy damy albo -1 albo 0.0)
-
