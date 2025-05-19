@@ -71,3 +71,8 @@
 # "HAZMAT_OUT_OF_SERVICE_I",
 # "MCS_OUT_OF_SERVICE_I",
 # "HAZMAT_CLASS",
+
+import pandas as pd
+
+def transform_vehicle(filepath_in: str) -> pd.DataFrame:
+    pass

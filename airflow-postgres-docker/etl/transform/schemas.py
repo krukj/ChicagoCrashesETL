@@ -11,7 +11,7 @@ COLUMNS_TO_DROP_CRASHES = [
     "DOORING_I",
     "WORK_ZONE_I",
     "WORK_ZONE_TYPE",
-    "WORKERS_PRESENT_I",  
+    "WORKERS_PRESENT_I",
     "CRASH_HOUR",
     "CRASH_DAY_OF_WEEK",
     "CRASH_MONTH",
@@ -53,10 +53,7 @@ COLUMNS_TO_INT_CRASHES = [
     "INJURIES_UNKNOWN",
 ]
 
-COLUMNS_TO_FLOAT_CRASHES = [
-    "LATITUDE",
-    "LONGITUDE"
-]
+COLUMNS_TO_FLOAT_CRASHES = ["LATITUDE", "LONGITUDE"]
 
 # TODO
 COLUMNS_TO_DATE = [
@@ -67,18 +64,110 @@ COLUMNS_TO_DATE = [
 ############## PEOPLE ##################
 
 
-
-
-
-
-
 ############## VEHICLES #################
 
+COLUMNS_TO_DROP_VEHICLES = [
+    "CRASH_DATE",
+    "UNIT_NO",
+    #   "VEHICLE_ID",  ?
+    "CMRC_VEH_I",
+    "LIC_PLATE_STATE",
+    "TOWED_I",
+    "FIRE_I",
+    "EXCEED_SPEED_LIMIT_I",
+    "TOWED_BY",
+    "TOWED_TO",
+    "AREA_00_I",
+    "AREA_01_I",
+    "AREA_02_I",
+    "AREA_03_I",
+    "AREA_04_I",
+    "AREA_05_I",
+    "AREA_06_I",
+    "AREA_07_I",
+    "AREA_08_I",
+    "AREA_09_I",
+    "AREA_10_I",
+    "AREA_11_I",
+    "AREA_12_I",
+    "AREA_99_I",
+    "CMV_ID",
+    "USDOT_NO",
+    "CCMC_NO",
+    "ILCC_NO",
+    "COMMERCIAL_SRC",
+    "GVWR",
+    "CARRIER_NAME",
+    "CARRIER_STATE",
+    "CARRIER_CITY",
+    "HAZMAT_PLACARDS_I",
+    "HAZMAT_NAME",
+    "UN_NO",
+    "HAZMAT_PRESENT_I",
+    "HAZMAT_REPORT_I",
+    "HAZMAT_REPORT_NO",
+    "MCS_REPORT_I",
+    "MCS_REPORT_NO",
+    "HAZMAT_VIO_CAUSE_CRASH_I",
+    "MCS_VIO_CAUSE_CRASH_I",
+    "IDOT_PERMIT_NO",
+    "WIDE_LOAD_I",
+    "TRAILER1_WIDTH",
+    "TRAILER2_WIDTH",
+    "TRAILER1_LENGTH",
+    "TRAILER2_LENGTH",
+    "TOTAL_VEHICLE_LENGTH",
+    "AXLE_CNT",
+    "VEHICLE_CONFIG",
+    "CARGO_BODY_TYPE",
+    "LOAD_TYPE",
+    "HAZMAT_OUT_OF_SERVICE_I",
+    "MCS_OUT_OF_SERVICE_I",
+    "HAZMAT_CLASS",
+]
 
+COLUMNS_TO_STRING_VEHICLES = [
+    "UNIT_TYPE",
+    "MAKE",
+    "MODEL",
+    "VEHICLE_DEFECT",
+    "VEHICLE_TYPE",
+    "VEHICLE_USE",
+    "TRAVEL_DIRECTION",
+    "MANEUVER",
+    "FIRST_CONTACT_POINT",
+]
 
-
-
+COLUMNS_TO_INT_VEHICLES = [
+    "NUM_PASSENGERS",
+    "VEHICLE_YEAR",
+    "OCCUPANT_CNT",  # DO FACT CRASH
+]
 
 
 ############## WEATHER ##################
 
+COLUMNS_TO_DROP_WEATHER = ["name", "severerisk", "icon", "stations"]
+
+COLUMNS_NULL_UNKNOWN_WEATHER = ["conditions"]
+
+COLUMNS_NULL_NONE_WEATHER = ["preciptype"]
+
+COLUMNS_TO_FLOAT_WEATHER = [
+    "temp",
+    "feelslike",
+    "dew",
+    "humidity",
+    "precip",
+    "snow",
+    "snowdepth",
+    "windgust",
+    "windspeed",
+    "sealevelpressure",
+    "cloudcover",
+    "visibility",
+    "solarradiation",
+    "solarenergy",
+]
+
+COLUMNS_TO_INT_WEATHER = ["precipprob", "uvindex"]

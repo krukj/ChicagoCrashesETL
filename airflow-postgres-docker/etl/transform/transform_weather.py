@@ -8,7 +8,7 @@
 # humidity: type: float, nazwa: humidity
 # precip: type: float, nazwa: precip, nulle -> 0
 # precipprob: type: int, nazwa: precip_prob, chyba ma tylko distinct 0 i 100
-# preciptype: type: str, nazwa: precip_type, nulle jako NONE moze zeby bylo ze nie bylo opadu 
+# preciptype: type: str, nazwa: precip_type, nulle jako NONE moze zeby bylo ze nie bylo opadu
 # snow: type: float, nazwa: snow, nulle -> 0
 # snowdepth: type: float, nazwa: snow_depth, nulle -> 0
 # windgust: type: float, nazwa: wind_gust, nulle -> 0
@@ -24,3 +24,45 @@
 # conditions: type: str, nazwa: conditions, nulle -> UNKNOWN
 # icon - wywalic
 # stations - wywalic
+
+from .schemas import (
+    COLUMNS_TO_DROP_WEATHER,
+    COLUMNS_NULL_UNKNOWN_WEATHER,
+    COLUMNS_NULL_NONE_WEATHER,
+    COLUMNS_TO_FLOAT_WEATHER,
+    COLUMNS_TO_INT_WEATHER,
+)
+from .utils import fill_na, change_type, replace_value
+import pandas as pd
+
+
+def trasform_weather(filepath_in: str) -> pd.DataFrame:
+    df = pd.read_pickle(filepath_in)
+
+    df = df.drop(columns=COLUMNS_TO_DROP_WEATHER)
+
+    df = fill_na(df, ["winddir"], 0)
+
+    # windir -> to str
+    df["winddir"] = pd.cut(
+        df["winddir"],
+        bins=[0, 45, 90, 135, 180, 225, 270, 315, 360],
+        labels=["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+        include_lowest=True,
+    )
+
+    # String handling
+    df = fill_na(df, COLUMNS_NULL_NONE_WEATHER, "NONE")
+    df = fill_na(df, COLUMNS_NULL_UNKNOWN_WEATHER, "UNKNOWN")
+    df = replace_value(df, COLUMNS_NULL_NONE_WEATHER, "", "NONE")
+    df = replace_value(df, COLUMNS_NULL_UNKNOWN_WEATHER, "", "UNKNOWN")
+    df = change_type(
+        df, COLUMNS_NULL_NONE_WEATHER + COLUMNS_NULL_UNKNOWN_WEATHER, "string"
+    )
+    # Int handling
+    df = fill_na(df, COLUMNS_TO_INT_WEATHER, -1)
+    df = change_type(df, COLUMNS_TO_INT_WEATHER, "Int64")
+
+    # Float handling
+    df = fill_na(df, COLUMNS_TO_FLOAT_WEATHER, 0)
+    df = change_type(df, COLUMNS_TO_FLOAT_WEATHER, "float32")
