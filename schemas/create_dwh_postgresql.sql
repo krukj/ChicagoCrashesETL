@@ -124,7 +124,7 @@ CREATE TABLE
         dew DECIMAL(5, 2) NOT NULL,
         humidity DECIMAL(5, 2) NOT NULL,
         precip DECIMAL(5, 2) NOT NULL,
-        precipprob DECIMAL(5, 2) NOT NULL,
+        -- precipprob DECIMAL(5, 2) NOT NULL, tylko 0 albo 100 więc skip
         preciptype VARCHAR(50),
         snow DECIMAL(5, 2) NOT NULL,
         snowdepth DECIMAL(5, 2) NOT NULL,

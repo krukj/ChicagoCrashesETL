@@ -168,7 +168,7 @@ EXPECTED_WEATHER_COLUMNS = {
 "dew",
 "humidity",
 "precip",
-"precipprob",
+# "precipprob",     # to w sumie usuńmy bo są albo 0 albo 100
 "preciptype",
 "snow",
 "snowdepth",
