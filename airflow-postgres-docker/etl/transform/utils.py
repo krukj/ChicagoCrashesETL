@@ -1,3 +1,4 @@
+import hashlib
 import pandas as pd
 from typing import List
 
@@ -46,3 +47,24 @@ def replace_value(
         pd.DataFrame: A DataFrame with changed value_in to value_out.
     """
     return df[cols].replace(value_in, value_out)
+
+
+def generate_surrogate_key(*args) -> int:
+    """
+    Generates a surrogate key based on the input arguments.
+
+    Args:
+        *args: Variable number of arguments to generate the key from.
+
+    Returns:
+        int: The generated surrogate key.
+    """
+    # example use:
+    # dim_crash_info_df["crash_info_id"] = dim_crash_info_df.apply(lambda row: generate_surrogate_key(*[row[col] for col in crash_info_cols]), axis=1)
+
+    key_string = "|".join(str(arg).lower().strip() for arg in args)
+    hash_bytes = hashlib.sha256(key_string.encode("utf-8")).digest()
+
+    bigint = int.from_bytes(hash_bytes[:8], byteorder="big", signed=False)
+
+    return bigint
