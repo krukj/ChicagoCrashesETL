@@ -72,6 +72,3 @@ def make_dim_date(
         "holiday_name",
     ]
     df = pd.DataFrame(date_list, columns=columns)
-
-
-# df.to_csv("data/date/dim_date.csv", index=False, encoding="utf-8")

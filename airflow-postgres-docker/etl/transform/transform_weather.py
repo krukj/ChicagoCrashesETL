@@ -66,3 +66,5 @@ def trasform_weather(filepath_in: str) -> pd.DataFrame:
     # Float handling
     df = fill_na(df, COLUMNS_TO_FLOAT_WEATHER, 0)
     df = change_type(df, COLUMNS_TO_FLOAT_WEATHER, "float32")
+
+    return df

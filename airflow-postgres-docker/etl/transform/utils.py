@@ -15,7 +15,11 @@ def change_type(df: pd.DataFrame, cols: List[str], type: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with specified columns converted to the desired data type.
     """
-    return df[cols].astype(type)
+    df_copy = df.copy()
+    for col in cols:
+        if col in df_copy.columns:
+            df_copy[col] = df_copy[col].astype(type)
+    return df_copy
 
 
 def fill_na(df: pd.DataFrame, cols: List[str], value) -> pd.DataFrame:
@@ -29,7 +33,11 @@ def fill_na(df: pd.DataFrame, cols: List[str], value) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A DataFrame with NA values in the specified columns filled.
     """
-    return df[cols].fillna(value)
+    df_copy = df.copy()
+    for col in cols:
+        if col in df_copy.columns:
+            df_copy[col] = df_copy[col].fillna(value)
+    return df_copy
 
 
 def replace_value(
@@ -46,7 +54,11 @@ def replace_value(
     Returns:
         pd.DataFrame: A DataFrame with changed value_in to value_out.
     """
-    return df[cols].replace(value_in, value_out)
+    df_copy = df.copy()
+    for col in cols:
+        if col in df_copy.columns:
+            df_copy[col] = df_copy[col].replace(value_in, value_out)
+    return df_copy
 
 
 def generate_surrogate_key(*args) -> int:

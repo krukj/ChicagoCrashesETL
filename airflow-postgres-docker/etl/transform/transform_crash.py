@@ -4,8 +4,10 @@ from .schemas import (
     COLUMNS_TO_INT_CRASHES,
     COLUMNS_TO_FLOAT_CRASHES,
     COLUMNS_TO_DATE,
+    COLUMNS_TO_FACT_CRASH,
+    COLUMNS_TO_DIM_CRASH_INFO,
 )
-from .utils import fill_na, change_type, replace_value
+from .utils import fill_na, change_type, replace_value, generate_surrogate_key
 
 import pandas as pd
 from pathlib import Path
@@ -66,6 +68,8 @@ from pathlib import Path
 def transform_crash(filepath_in: str) -> pd.DataFrame:
     df = pd.read_pickle(filepath_in)
 
+    # df.columns = df.columns.str.strip().str.lower()
+
     df = df.drop(columns=COLUMNS_TO_DROP_CRASHES)
 
     # String handling
@@ -81,4 +85,24 @@ def transform_crash(filepath_in: str) -> pd.DataFrame:
     df = fill_na(df, COLUMNS_TO_FLOAT_CRASHES, -999)
     df = change_type(df, COLUMNS_TO_FLOAT_CRASHES, "float32")
 
+    return df
     # TODO coś tam z datą pokminić jak najsensowniej
+
+
+def split_crash(df) -> tuple[pd.DataFrame, pd.DataFrame]:
+
+    dim_crash_info = df[COLUMNS_TO_DIM_CRASH_INFO].drop_duplicates()
+    fact_crash = df[COLUMNS_TO_FACT_CRASH].drop_duplicates()
+
+    # generating surrogate keys
+    fact_crash["FACT_CRASH_KEY"] = fact_crash.apply(
+        lambda row: generate_surrogate_key(row["CRASH_RECORD_ID"]), axis=1
+    )
+    dim_crash_info["CRASH_INFO_KEY"] = dim_crash_info.apply(
+        lambda row: generate_surrogate_key(
+            *[row[col] for col in COLUMNS_TO_DIM_CRASH_INFO]
+        ),
+        axis=1,
+    )
+
+    return fact_crash, dim_crash_info

@@ -1,9 +1,9 @@
 # tu ogólnie crash_unit_id i vehicle_id to to samo jest tylko jedno float drugie int xd ~ Tomek
 
 # CRASH_UNIT_ID - wywalic i stworzyc surrogate key vehicle_id
-# CRASH_RECORD_ID - do polaczenia 
-# CRASH_DATE - wywalic 
-# UNIT_NO - wywalic 
+# CRASH_RECORD_ID - do polaczenia
+# CRASH_DATE - wywalic
+# UNIT_NO - wywalic
 # UNIT_TYPE - type:str, nazwa: unit_type, nulle -> UNKNOW
 # NUM_PASSENGERS - type: int, nazwa: num_passengers, nulle ->
 # VEHICLE_ID - wwyalic ?
@@ -72,7 +72,33 @@
 # "MCS_OUT_OF_SERVICE_I",
 # "HAZMAT_CLASS",
 
+from .schemas import (
+    COLUMNS_TO_DROP_VEHICLES,
+    COLUMNS_TO_STRING_VEHICLES,
+    COLUMNS_TO_INT_VEHICLES,
+)
+from .utils import fill_na, change_type, replace_value, generate_surrogate_key
 import pandas as pd
 
+
 def transform_vehicle(filepath_in: str) -> pd.DataFrame:
-    pass
+    df = pd.read_pickle(filepath_in)
+
+    df = df.drop(columns=COLUMNS_TO_DROP_VEHICLES)
+
+    # String handling
+    df = fill_na(df, COLUMNS_TO_STRING_VEHICLES, "UKNOWN")
+    df = replace_value(df, COLUMNS_TO_STRING_VEHICLES, "", "UNKNOWN")
+    df = change_type(df, COLUMNS_TO_STRING_VEHICLES, "string")
+
+    # Int handling
+    df = fill_na(df, COLUMNS_TO_INT_VEHICLES, -1)
+    df = change_type(df, COLUMNS_TO_INT_VEHICLES, "Int64")
+
+    vehicle_key_cols = ["CRASH_RECORD_ID", "CRASH_UNIT_ID"]
+
+    df["VEHICLE_KEY"] = df.apply(
+        lambda row: generate_surrogate_key(*[row[col] for col in vehicle_key_cols]),
+        axis=1,
+    )
+    return df
