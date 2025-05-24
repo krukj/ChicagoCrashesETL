@@ -2,9 +2,11 @@ from .transform_crash import transform_crash, split_crash
 from .transform_weather import trasform_weather
 from .transform_vehicle import transform_vehicle
 from .transform_person import transform_person
+from .make_dim_date import make_dim_date
 from .utils import generate_surrogate_key
 
 import os
+import datetime
 import pandas as pd
 from etl.logging_config import setup_logger
 
@@ -85,6 +87,23 @@ def perform_transformation_weather(filepath_in: str, filepath_out: str) -> pd.Da
     weather_df.to_pickle(filepath_out)
     logger.info(f"{module_tag} Saved as a pickle in {filepath_out}")
     return weather_df
+
+def perform_make_dim_date(
+    filepath_out: str,
+    start_date: datetime.date = datetime.date(2016, 1, 1),
+    end_date: datetime.date = datetime.date(2021, 12, 31)
+    ) -> pd.DataFrame:
+    module_tag = "[DATE]"
+    logger.info(f"{module_tag} Starting dim_date making.")
+
+    dim_date = make_dim_date(start_date, end_date) # tutaj
+
+    logger.info(f"{module_tag} Dim_date successfully made")
+
+    dim_date.to_pickle(filepath_out)
+    logger.info(f"{module_tag} Saved as a pickle in {filepath_out}")
+
+    return dim_date
 
 
 def main():
@@ -183,6 +202,18 @@ def main():
         "transformed",
         "dim_person.pkl"
     )
+
+    dim_date_path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "..",
+        "..",
+        "data",
+        "tmp",
+        "transformed",
+        "dim_date.pkl"
+    )
+
     fact_crash, dim_crash_info = perform_transformation_crash(
         crash_path_in, fact_crash_path, dim_crash_info_path
     )
@@ -198,6 +229,9 @@ def main():
         person_path_in, dim_person_path
     )
 
+    dim_date = perform_make_dim_date(
+        dim_date_path
+    )
 
 if __name__ == "__main__":
     main()

@@ -43,7 +43,6 @@ def transform_person(filepath_in: str) -> pd.DataFrame:
 
     # Int handling
     df = fill_na(df, COLUMNS_TO_INT_PEOPLE, -1)
-    print(df.columns)
     df.loc[df['AGE'] < 0, 'AGE'] = -1
     df = change_type(df, COLUMNS_TO_INT_PEOPLE, 'Int64')
 
