@@ -72,3 +72,5 @@ def make_dim_date(
         "holiday_name",
     ]
     df = pd.DataFrame(date_list, columns=columns)
+
+    return df

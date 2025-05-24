@@ -1,6 +1,7 @@
 from .transform_crash import transform_crash, split_crash
 from .transform_weather import trasform_weather
 from .transform_vehicle import transform_vehicle
+from .transform_person import transform_person
 from .utils import generate_surrogate_key
 
 import os
@@ -34,20 +35,25 @@ def perform_transformation_crash(
     return fact_crash, dim_crash_info
 
 
-def perform_transformation_people(filepath_in: str, filepath_out: str):
-    # module_tag = "[PEOPLE]"
-    # logger.info(f"{module_tag} Starting people data transformation.")
+def perform_transformation_person(
+    filepath_in: str, filepath_out: str
+    ) -> pd.DataFrame:
+    module_tag = "[PEOPLE]"
+    logger.info(f"{module_tag} Starting people data transformation.")
 
-    # logger.info(f"{module_tag} People data transformation completed successfully.")
+    person_df = transform_person(filepath_in)
 
-    # logger.info(f"{module_tag} Saved as a pickle in {filepath_out}")
+    logger.info(f"{module_tag} People data transformation completed successfully.")
 
-    pass
+    person_df.to_pickle(filepath_out)
 
+    logger.info(f"{module_tag} Saved as a pickle in {filepath_out}")
+
+    return person_df
 
 def perform_transformation_vehicles(
     filepath_in: str, filepath_out: str, dim_crash_info_path: str
-):
+    ) -> pd.DataFrame:
     module_tag = "[VEHICLES]"
     logger.info(f"{module_tag} Starting vehicle data transformation.")
 
@@ -66,8 +72,10 @@ def perform_transformation_vehicles(
     vehicle_df.to_pickle(filepath_out)
     logger.info(f"{module_tag} Saved as a pickle in {filepath_out}")
 
+    return vehicle_df
 
-def perform_transformation_weather(filepath_in: str, filepath_out: str):
+
+def perform_transformation_weather(filepath_in: str, filepath_out: str) -> pd.DataFrame:
     module_tag = "[WEATHER]"
     logger.info(f"{module_tag} Starting weather data transformation.")
 
@@ -113,6 +121,17 @@ def main():
         "vehicles.pkl",
     )
 
+    person_path_in = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "..",
+        "..",
+        "data",
+        "tmp",
+        "extracted",
+        "people.pkl"
+    )
+
     # out paths
     fact_crash_path = os.path.join(
         os.path.dirname(__file__),
@@ -154,14 +173,30 @@ def main():
         "transformed",
         "dim_vehicle.pkl",
     )
+    dim_person_path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "..",
+        "..",
+        "data",
+        "tmp",
+        "transformed",
+        "dim_person.pkl"
+    )
     fact_crash, dim_crash_info = perform_transformation_crash(
         crash_path_in, fact_crash_path, dim_crash_info_path
     )
-    fact_weather = perform_transformation_weather(weather_path_in, fact_weather_path)
+
+    fact_weather = perform_transformation_weather(
+        weather_path_in, fact_weather_path
+    )
     dim_vehicle = perform_transformation_vehicles(
         vehicles_path_in, dim_vehicle_path, dim_crash_info_path
     )
-    # pass
+
+    dim_person = perform_transformation_person(
+        person_path_in, dim_person_path
+    )
 
 
 if __name__ == "__main__":

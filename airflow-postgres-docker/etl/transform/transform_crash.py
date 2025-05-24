@@ -85,24 +85,28 @@ def transform_crash(filepath_in: str) -> pd.DataFrame:
     df = fill_na(df, COLUMNS_TO_FLOAT_CRASHES, -999)
     df = change_type(df, COLUMNS_TO_FLOAT_CRASHES, "float32")
 
-    return df
-    # TODO coś tam z datą pokminić jak najsensowniej
+    # Date handling
+    df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATE'], format='%m/%d/%Y %I:%M:%S %p')
 
+    df['date_id'] = df['CRASH_DATETIME'].dt.strftime('%Y%m%d').astype(int)
+    df['time_id'] = df['CRASH_DATETIME'].dt.hour * 100
+    return df
 
 def split_crash(df) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     dim_crash_info = df[COLUMNS_TO_DIM_CRASH_INFO].drop_duplicates()
-    fact_crash = df[COLUMNS_TO_FACT_CRASH].drop_duplicates()
+    fact_crash = df[COLUMNS_TO_FACT_CRASH + ['date_id']].drop_duplicates()
 
     # generating surrogate keys
-    fact_crash["FACT_CRASH_KEY"] = fact_crash.apply(
+    fact_crash.insert(0, "FACT_CRASH_KEY", fact_crash.apply(
         lambda row: generate_surrogate_key(row["CRASH_RECORD_ID"]), axis=1
-    )
-    dim_crash_info["CRASH_INFO_KEY"] = dim_crash_info.apply(
+    ))
+
+    dim_crash_info.insert(0, "CRASH_INFO_KEY", dim_crash_info.apply(
         lambda row: generate_surrogate_key(
             *[row[col] for col in COLUMNS_TO_DIM_CRASH_INFO]
         ),
         axis=1,
-    )
+    )) # dajemy tą kolumnę na początek (tu insert szybkie akurat xd ~Tomek)
 
     return fact_crash, dim_crash_info

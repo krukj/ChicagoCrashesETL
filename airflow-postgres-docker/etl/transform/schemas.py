@@ -55,7 +55,6 @@ COLUMNS_TO_INT_CRASHES = [
 
 COLUMNS_TO_FLOAT_CRASHES = ["LATITUDE", "LONGITUDE"]
 
-# TODO
 COLUMNS_TO_DATE = [
     "CRASH_DATE",
     "DATE_POLICE_NOTIFIED",
@@ -89,8 +88,48 @@ COLUMNS_TO_FACT_CRASH = [
     "INJURIES_NO_INDICATION",
     "INJURIES_UNKNOWN",
 ]
+
 ############## PEOPLE ##################
 
+COLUMNS_TO_DROP_PEOPLE = [ 
+    "SEAT_NO",           
+    "CITY",              
+    "STATE",               
+    "ZIPCODE",             
+    "DRIVERS_LICENSE_STATE",
+    "DRIVERS_LICENSE_CLASS",
+    "HOSPITAL",            
+    "EMS_AGENCY",
+    "EMS_RUN_NO",
+    "PEDPEDAL_ACTION",
+    "PEDPEDAL_VISIBILITY",
+    "PEDPEDAL_LOCATION",
+    "CELL_PHONE_USE",
+    ]
+
+COLUMNS_TO_STRING_PEOPLE = [
+    "PERSON_ID",
+    "PERSON_TYPE",
+    "CRASH_RECORD_ID",
+    "SEX",
+    "SAFETY_EQUIPMENT",
+    "AIRBAG_DEPLOYED",
+    "EJECTION",
+    "INJURY_CLASSIFICATION",
+    "DRIVER_ACTION",
+    "DRIVER_VISION",
+    "PHYSICAL_CONDITION",
+    "BAC_RESULT" 
+]
+
+COLUMNS_TO_INT_PEOPLE = [
+    "VEHICLE_ID",
+    "AGE",
+]
+
+COLUMNS_TO_FLOAT_PEOPLE = [
+    "BAC_RESULT VALUE"
+]
 
 ############## VEHICLES #################
 
@@ -171,7 +210,6 @@ COLUMNS_TO_INT_VEHICLES = [
     "VEHICLE_YEAR",
     "OCCUPANT_CNT",  # DO FACT CRASH
 ]
-
 
 ############## WEATHER ##################
 
