@@ -67,4 +67,9 @@ def trasform_weather(filepath_in: str) -> pd.DataFrame:
     df = fill_na(df, COLUMNS_TO_FLOAT_WEATHER, 0)
     df = change_type(df, COLUMNS_TO_FLOAT_WEATHER, "float32")
 
+    # Date handling
+    df["datetime"] = pd.to_datetime(df["datetime"])
+    df["datetime"] = df["datetime"].dt.round("H")
+    df["date_id"] = df["datetime"].dt.strftime('%Y%m%d%H').astype(int)
+    df.insert(1, 'date_id', df.pop('date_id'))
     return df
