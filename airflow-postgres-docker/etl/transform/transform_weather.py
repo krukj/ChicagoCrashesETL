@@ -32,7 +32,7 @@ from .schemas import (
     COLUMNS_TO_FLOAT_WEATHER,
     COLUMNS_TO_INT_WEATHER,
 )
-from .utils import fill_na, change_type, replace_value
+from .utils import fill_na, change_type, replace_value, generate_surrogate_key
 import pandas as pd
 
 
@@ -72,4 +72,9 @@ def trasform_weather(filepath_in: str) -> pd.DataFrame:
     df["datetime"] = df["datetime"].dt.round("H")
     df["date_id"] = df["datetime"].dt.strftime('%Y%m%d%H').astype(int)
     df.insert(1, 'date_id', df.pop('date_id'))
+
+    df.insert(0, "WEATHER_KEY", df.apply(
+        lambda row: generate_surrogate_key(row['date_id']), axis=1
+    ))
+
     return df

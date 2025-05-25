@@ -32,7 +32,7 @@ def extract_crashes_csv(filepath_in: str, filepath_out: str) -> pd.DataFrame:
 
 
 def extract_people_csv(filepath_in: str, filepath_out: str) -> pd.DataFrame:
-    module_tag = "PEOPLE"
+    module_tag = "PERSON"
     logger.info(f"{module_tag} Starting people data extraction.")
     df = pd.read_csv(
         filepath_in, low_memory=False
@@ -51,7 +51,7 @@ def extract_people_csv(filepath_in: str, filepath_out: str) -> pd.DataFrame:
 
 
 def extract_vehicles_csv(filepath_in: str, filepath_out: str) -> pd.DataFrame:
-    module_tag = "[VEHICLES]"
+    module_tag = "[VEHICLE]"
     logger.info(f"{module_tag} Starting vehicles data extraction.")
     df = pd.read_csv(
         filepath_in, low_memory=False
