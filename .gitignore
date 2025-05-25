@@ -2,6 +2,8 @@ airflow-postgres-docker/logs
 airflow-postgres-docker/data/crashes_data
 airflow-postgres-docker/data/weather_data
 airflow-postgres-docker/data/tmp
+data/tmp/transformed/*.pkl
+data/tmp/extracted/*.pkl
 data/crashes_data/*
 data/tmp/*
 **/__pycache__/*

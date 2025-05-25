@@ -91,6 +91,7 @@ def transform_crash(filepath_in: str) -> pd.DataFrame:
     df['CRASH_DATETIME_ROUNDED'] = df['CRASH_DATETIME'].dt.round('H')
 
     df['date_id'] = df['CRASH_DATETIME_ROUNDED'].dt.strftime('%Y%m%d%H').astype(int)
+    df = df.drop(columns=["CRASH_DATETIME_ROUNDED"])
     df.insert(2, 'date_id', df.pop('date_id'))
     return df
 
