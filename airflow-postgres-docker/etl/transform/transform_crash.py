@@ -88,8 +88,11 @@ def transform_crash(filepath_in: str) -> pd.DataFrame:
     # Date handling
     df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATE'], format='%m/%d/%Y %I:%M:%S %p')
 
-    df['date_id'] = df['CRASH_DATETIME'].dt.strftime('%Y%m%d').astype(int)
-    df['time_id'] = df['CRASH_DATETIME'].dt.hour * 100
+    df['CRASH_DATETIME_ROUNDED'] = df['CRASH_DATETIME'].dt.round('H')
+
+    df['date_id'] = df['CRASH_DATETIME_ROUNDED'].dt.strftime('%Y%m%d%H').astype(int)
+    df = df.drop(columns=["CRASH_DATETIME_ROUNDED"])
+    df.insert(2, 'date_id', df.pop('date_id'))
     return df
 
 def split_crash(df) -> Tuple[pd.DataFrame, pd.DataFrame]:
