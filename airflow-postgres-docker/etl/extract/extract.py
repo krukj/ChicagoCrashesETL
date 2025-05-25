@@ -107,36 +107,22 @@ def extract_weather_csv(dirpath: str, filepath_out: str) -> pd.DataFrame:
 
 
 def main():
-    print(os.getcwd())
-    print(__file__)
 
-    weather_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "weather_data")
-    crashes_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_Crashes.csv",)
-    people_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_People.csv")
-    vehicles_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "crashes_data", "Traffic_Crashes_Vehicles.csv",)
+    base_dir = "/opt/airflow"
+    weather_path = os.path.join(base_dir, "data", "weather_data")
+    crashes_path = os.path.join(base_dir, "data", "crashes_data",  "Traffic_Crashes_Crashes.csv",)
+    people_path = os.path.join(base_dir, "data", "crashes_data",  "Traffic_Crashes_People.csv",)
+    vehicles_path = os.path.join(base_dir, "data", "crashes_data",  "Traffic_Crashes_Vehicles.csv",)
 
-    weather_path_out = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "extracted",
-        "weather.pkl",
-    )
-    crashes_path_out = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "tmp", "extracted", "crashes.pkl",)
-    people_path_out = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "tmp", "extracted", "people.pkl",)
-    vehicles_path_out = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "tmp", "extracted", "vehicles.pkl",)
+    weather_path_out = os.path.join(base_dir, "data","tmp","extracted", "weather.pkl")
+    crashes_path_out = os.path.join(base_dir, "data","tmp","extracted","crashes.pkl")
+    people_path_out = os.path.join(base_dir, "data","tmp","extracted","people.pkl")
+    vehicles_path_out = os.path.join(base_dir, "data","tmp","extracted","vehicles.pkl")
 
     weather_df = extract_weather_csv(weather_path, weather_path_out)
     crashes_df = extract_crashes_csv(crashes_path, crashes_path_out)
     people_df = extract_people_csv(people_path, people_path_out)
     vehicles_df = extract_vehicles_csv(vehicles_path, vehicles_path_out)
-
-    # wszystko pięknie działa
-    # pass
-
 
 if __name__ == "__main__":
     main()

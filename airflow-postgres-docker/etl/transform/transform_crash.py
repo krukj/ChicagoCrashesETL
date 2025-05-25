@@ -10,7 +10,7 @@ from .schemas import (
 from .utils import fill_na, change_type, replace_value, generate_surrogate_key
 
 import pandas as pd
-from pathlib import Path
+from typing import Tuple
 
 # nazwy no to po prostu zmieniamy na snake_case małe litery
 # jak str są '' to UNKNOWN
@@ -92,7 +92,7 @@ def transform_crash(filepath_in: str) -> pd.DataFrame:
     df['time_id'] = df['CRASH_DATETIME'].dt.hour * 100
     return df
 
-def split_crash(df) -> tuple[pd.DataFrame, pd.DataFrame]:
+def split_crash(df) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     dim_crash_info = df[COLUMNS_TO_DIM_CRASH_INFO].drop_duplicates()
     fact_crash = df[COLUMNS_TO_FACT_CRASH + ['date_id']].drop_duplicates()

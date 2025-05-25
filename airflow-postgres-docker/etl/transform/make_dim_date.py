@@ -31,10 +31,10 @@ def make_dim_date(
         day_of_month = current_date.day
         day_of_week = current_date.isoweekday()
         day_name = current_date.strftime("%A")
-        is_weekend = int(day_of_week >= 6)
+        is_weekend = day_of_week >= 6
         week_of_year = current_date.isocalendar()[1]
-        is_holiday = int(current_date in us_holidays)
-        holiday_name = us_holidays.get(current_date) if is_holiday else None
+        is_holiday = current_date in us_holidays
+        holiday_name = us_holidays.get(current_date) if is_holiday else "None"
 
         date_list.append(
             [

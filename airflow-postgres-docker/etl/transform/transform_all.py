@@ -1,3 +1,4 @@
+from typing import Tuple
 from .transform_crash import transform_crash, split_crash
 from .transform_weather import trasform_weather
 from .transform_vehicle import transform_vehicle
@@ -15,7 +16,7 @@ logger = setup_logger(__name__)
 
 def perform_transformation_crash(
     filepath_in: str, fact_filepath_out: str, dim_filepath_out: str
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     module_tag = "[CRASH]"
     logger.info(f"{module_tag} Starting crash data transformation.")
 
@@ -107,112 +108,21 @@ def perform_make_dim_date(
 
 
 def main():
+    base_dir = "/opt/airflow"
     # source paths
-    crash_path_in = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "extracted",
-        "crashes.pkl",
-    )
-    weather_path_in = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "extracted",
-        "weather.pkl",
-    )
-
-    vehicles_path_in = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "extracted",
-        "vehicles.pkl",
-    )
-
-    person_path_in = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "extracted",
-        "people.pkl"
-    )
+    crash_path_in = os.path.join(base_dir, "data","tmp","extracted","crashes.pkl")
+    weather_path_in =os.path.join(base_dir, "data","tmp","extracted", "weather.pkl")
+    vehicles_path_in = os.path.join(base_dir, "data","tmp","extracted","vehicles.pkl")
+    person_path_in = os.path.join(base_dir, "data","tmp","extracted","people.pkl")
 
     # out paths
-    fact_crash_path = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "transformed",
-        "fact_crash.pkl",
-    )
-    dim_crash_info_path = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "transformed",
-        "dim_crash_info.pkl",
-    )
-    fact_weather_path = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "transformed",
-        "fact_weather.pkl",
-    )
-    dim_vehicle_path = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "transformed",
-        "dim_vehicle.pkl",
-    )
-    dim_person_path = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "transformed",
-        "dim_person.pkl"
-    )
+    fact_crash_path = os.path.join(base_dir, "data","tmp","transformed","fact_crash.pkl")
+    dim_crash_info_path = os.path.join(base_dir, "data","tmp","transformed","dim_crash_info.pkl")
+    fact_weather_path = os.path.join(base_dir, "data","tmp","transformed","fact_weather.pkl")
+    dim_vehicle_path = os.path.join(base_dir, "data","tmp","transformed","dim_vehicle.pkl")
+    dim_person_path = os.path.join(base_dir, "data","tmp","transformed","dim_people.pkl")
 
-    dim_date_path = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "..",
-        "..",
-        "data",
-        "tmp",
-        "transformed",
-        "dim_date.pkl"
-    )
+    dim_date_path = os.path.join(base_dir, "data","tmp","transformed","dim_date.pkl")
 
     fact_crash, dim_crash_info = perform_transformation_crash(
         crash_path_in, fact_crash_path, dim_crash_info_path
