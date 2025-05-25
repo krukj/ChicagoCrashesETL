@@ -55,6 +55,15 @@ def transform_person(filepath_in: str) -> pd.DataFrame:
         df["CRASH_DATE"], format="%m/%d/%Y %I:%M:%S %p"
     )
 
+    # Surogate key
+    cols_to_surrogate = ["PERSON_ID", "CRASH_RECORD_ID"]
+    df.insert(0, "PERSON_KEY", df.apply(
+        lambda row: generate_surrogate_key(
+            *[row[col] for col in cols_to_surrogate]
+        ),
+        axis=1
+    ))
+
     df["CRASH_DATETIME_ROUNDED"] = df["CRASH_DATETIME"].dt.round("H")
 
     df["date_id"] = df["CRASH_DATETIME_ROUNDED"].dt.strftime("%Y%m%d%H").astype(int)

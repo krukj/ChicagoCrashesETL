@@ -7,6 +7,7 @@ from .load_fact_weather import load_fact_weather
 from .load_fact_crash import load_fact_crash
 
 import os
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 from etl.logging_config import setup_logger
 
 logger = setup_logger(__name__)
@@ -21,6 +22,37 @@ def load_all(
     fact_weather_path: str,
     fact_crash_path: str,
 ):
+
+    # Najpierw truncate od factowych
+    hook = PostgresHook(postgres_conn_id='postgres_default')
+    conn = hook.get_conn()
+    cursor = conn.cursor()
+
+    tables = [
+    'staging.fact_crash',
+    'staging.fact_weather',
+    'core.fact_crash',
+    'core.fact_weather'
+]
+
+    for table in tables:
+        schema, name = table.split('.')
+        cursor.execute(f"""
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = '{schema}' AND table_name = '{name}'
+            ) THEN
+                EXECUTE 'TRUNCATE TABLE {schema}.{name} CASCADE';
+            END IF;
+        END$$;
+        """)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
     load_dim_date(dim_date_path)
     load_dim_location(dim_location_path)
     load_dim_vehicle(dim_vehicle_path)

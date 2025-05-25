@@ -104,7 +104,10 @@ def split_crash(df) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # generating surrogate keys
     fact_crash.insert(0, "FACT_CRASH_KEY", fact_crash.apply(
-        lambda row: generate_surrogate_key(row["CRASH_RECORD_ID"]), axis=1
+        lambda row: generate_surrogate_key(
+            *[row[col] for col in COLUMNS_TO_FACT_CRASH]
+        ),
+        axis=1,
     ))
 
     dim_crash_info.insert(0, "CRASH_INFO_KEY", dim_crash_info.apply(

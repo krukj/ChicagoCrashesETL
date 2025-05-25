@@ -45,7 +45,7 @@ def load_dim_date(filepath_in) -> None:
             """
         )
 
-        cursor.execute("TRUNCATE staging.dim_date")
+        cursor.execute("TRUNCATE staging.dim_date CASCADE")
 
         logger.info(f"{module_tag} Inserting data into table (staging).")
         for _, row in dim_date.iterrows():
@@ -100,7 +100,7 @@ def load_dim_date(filepath_in) -> None:
         )
 
         cursor.execute(
-            "TRUNCATE core.dim_date"
+            "TRUNCATE core.dim_date CASCADE"
         ) 
 
         logger.info(f"{module_tag} Inserting data into table (core).")

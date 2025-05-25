@@ -1,4 +1,6 @@
+import os
 import pandas as pd
+import psycopg2.extras
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from etl.logging_config import setup_logger
 
@@ -8,24 +10,21 @@ module_tag = "[dim_person]"
 
 def load_dim_person(filepath_in) -> None:
     try:
-        logger.info(f"{module_tag} Starting to load dim_person from pickle.")
+        logger.info(f"{module_tag} Loading dim_person from pickle: {filepath_in}")
         dim_person = pd.read_pickle(filepath_in)
 
-        logger.info(f"{module_tag} Creating postgres connection.")
+        logger.info(f"{module_tag} Connecting to Postgres.")
         hook = PostgresHook(postgres_conn_id="postgres_default")
         conn = hook.get_conn()
         cursor = conn.cursor()
 
+        # ensure schemas
         cursor.execute("CREATE SCHEMA IF NOT EXISTS staging;")
         cursor.execute("CREATE SCHEMA IF NOT EXISTS core;")
 
-        logger.info(f"{module_tag} Dropping old tables if exist.")
-        # cursor.execute("DROP TABLE IF EXISTS staging.dim_person;")
-        # cursor.execute("DROP TABLE IF EXISTS core.dim_person;")
-
+        # create & truncate staging table
         logger.info(f"{module_tag} Creating staging.dim_person table.")
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS staging.dim_person (
                 person_id VARCHAR(150) PRIMARY KEY,
                 person_type VARCHAR(150) NOT NULL,
@@ -48,55 +47,41 @@ def load_dim_person(filepath_in) -> None:
                 valid_to NUMERIC NOT NULL,
                 is_current BOOLEAN NOT NULL
             );
-            """
+        """)
+        cursor.execute("TRUNCATE staging.dim_person CASCADE;")
+    
+
+        # bulk insert via execute_values
+        logger.info(f"{module_tag} Bulk inserting into staging.dim_person.")
+        # replace NaNs with None
+        records = (
+            dim_person[[
+                "PERSON_ID","PERSON_TYPE","date_id","CRASH_RECORD_ID","VEHICLE_ID",
+                "CRASH_DATE","SEX","AGE","SAFETY_EQUIPMENT","AIRBAG_DEPLOYED","EJECTION",
+                "INJURY_CLASSIFICATION","DRIVER_ACTION","DRIVER_VISION","PHYSICAL_CONDITION",
+                "BAC_RESULT","BAC_RESULT VALUE","VALID_FROM","VALID_TO","IS_CURRENT"
+            ]]
+            .where(pd.notnull(dim_person), None)
+            .to_records(index=False)
+            .tolist()
         )
 
-        cursor.execute("TRUNCATE staging.dim_person;")
-
-        logger.info(f"{module_tag} Inserting data into staging.dim_person.")
-        for _, row in dim_person.iterrows():
-            cursor.execute(
-                """
-                INSERT INTO staging.dim_person (
-                    person_id, person_type, date_id, crash_record_id, vehicle_id, crash_date, sex, age,
-                    safety_equipment, airbag_deployed, ejection, injury_classification, driver_action,
-                    driver_vision, physical_condition, bac_result, bac_result_value, valid_from, valid_to, is_current
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    row["PERSON_ID"],
-                    row["PERSON_TYPE"],
-                    int(row["date_id"]),
-                    row["CRASH_RECORD_ID"],
-                    int(row["VEHICLE_ID"]) if pd.notnull(row["VEHICLE_ID"]) else None,
-                    pd.to_datetime(row["CRASH_DATE"]).date(),
-                    row["SEX"],
-                    int(row["AGE"]) if pd.notnull(row["AGE"]) else None,
-                    row["SAFETY_EQUIPMENT"],
-                    row["AIRBAG_DEPLOYED"],
-                    row["EJECTION"],
-                    row["INJURY_CLASSIFICATION"],
-                    row["DRIVER_ACTION"],
-                    row["DRIVER_VISION"],
-                    row["PHYSICAL_CONDITION"],
-                    row["BAC_RESULT"],
-                    (
-                        float(row["BAC_RESULT VALUE"])
-                        if pd.notnull(row["BAC_RESULT VALUE"])
-                        else None
-                    ),
-                    int(row["VALID_FROM"]),
-                    int(row["VALID_TO"]),
-                    bool(row["IS_CURRENT"]),
-                ),
-            )
-
+        insert_sql = """
+            INSERT INTO staging.dim_person (
+                person_id, person_type, date_id, crash_record_id, vehicle_id, crash_date,
+                sex, age, safety_equipment, airbag_deployed, ejection, injury_classification,
+                driver_action, driver_vision, physical_condition, bac_result, bac_result_value,
+                valid_from, valid_to, is_current
+            ) VALUES %s
+        """
+        psycopg2.extras.execute_values(
+            cursor, insert_sql, records, page_size=1000
+        )
         conn.commit()
 
+        # create & truncate core table
         logger.info(f"{module_tag} Creating core.dim_person table.")
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS core.dim_person (
                 person_id VARCHAR(150) PRIMARY KEY,
                 person_type VARCHAR(150) NOT NULL,
@@ -119,27 +104,31 @@ def load_dim_person(filepath_in) -> None:
                 valid_to NUMERIC NOT NULL,
                 is_current BOOLEAN NOT NULL
             );
-            """
-        )
+        """)
+        cursor.execute("TRUNCATE core.dim_person CASCADE;")
 
-        cursor.execute("TRUNCATE core.dim_person;")
-
-        logger.info(
-            f"{module_tag} Copying data from staging.dim_person to core.dim_person."
-        )
-        cursor.execute(
-            """
+        logger.info(f"{module_tag} Copying data staging -> core.")
+        cursor.execute("""
             INSERT INTO core.dim_person
             SELECT * FROM staging.dim_person;
-            """
-        )
-
+        """)
         conn.commit()
+
         cursor.close()
         conn.close()
-
-        logger.info(f"{module_tag} Successfully inserted dim_person into database")
+        logger.info(f"{module_tag} Successfully inserted dim_person into database.")
 
     except Exception as e:
-        logger.error(f"{module_tag} Error in load_dim_person: {str(e)}")
+        logger.error(f"{module_tag} Error in load_dim_person: {e}")
         raise
+
+
+def main():
+    base_dir = os.getenv("AIRFLOW_HOME", "/opt/airflow")
+    filepath_in = os.path.join(base_dir, "data", "tmp", "transformed", "dim_people.pkl")
+    logger.info(f"{module_tag} Starting load_dim_person main().")
+    load_dim_person(filepath_in)
+
+
+if __name__ == "__main__":
+    main()

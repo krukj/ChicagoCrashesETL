@@ -1,4 +1,5 @@
 import pandas as pd
+import psycopg2.extras
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from etl.logging_config import setup_logger
 
@@ -16,13 +17,16 @@ def load_dim_crash_info(filepath_in) -> None:
         conn = hook.get_conn()
         cursor = conn.cursor()
 
+        # Ensure schemas exist
         cursor.execute("CREATE SCHEMA IF NOT EXISTS staging;")
         cursor.execute("CREATE SCHEMA IF NOT EXISTS core;")
 
+        # Drop old tables if they exist
         logger.info(f"{module_tag} Dropping old tables.")
         cursor.execute("DROP TABLE IF EXISTS staging.dim_crash_info;")
         cursor.execute("DROP TABLE IF EXISTS core.dim_crash_info;")
 
+        # Create staging table
         logger.info(f"{module_tag} Creating staging table.")
         cursor.execute(
             """
@@ -44,40 +48,46 @@ def load_dim_crash_info(filepath_in) -> None:
             );
             """
         )
+        cursor.execute("TRUNCATE staging.dim_crash_info CASCADE;")
 
-        cursor.execute("TRUNCATE staging.dim_crash_info;")
-
+        # Bulk insert into staging using execute_values
         logger.info(f"{module_tag} Inserting data into staging.")
-        for _, row in dim_crash_info.iterrows():
-            cursor.execute(
-                """
-                INSERT INTO staging.dim_crash_info (
-                    crash_info_key, traffic_control_device, device_condition, first_crash_type,
-                    trafficway_type, alignment, roadway_surface_cond, road_defect, report_type,
-                    crash_type, damage, prim_contributory_cause, sec_contributory_cause, most_severe_injury
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    row["CRASH_INFO_KEY"],
-                    row["TRAFFIC_CONTROL_DEVICE"],
-                    row["DEVICE_CONDITION"],
-                    row["FIRST_CRASH_TYPE"],
-                    row["TRAFFICWAY_TYPE"],
-                    row["ALIGNMENT"],
-                    row["ROADWAY_SURFACE_COND"],
-                    row["ROAD_DEFECT"],
-                    row["REPORT_TYPE"],
-                    row["CRASH_TYPE"],
-                    row["DAMAGE"],
-                    row["PRIM_CONTRIBUTORY_CAUSE"],
-                    row["SEC_CONTRIBUTORY_CAUSE"],
-                    row["MOST_SEVERE_INJURY"],
-                ),
-            )
+        records = dim_crash_info[
+            [
+                "CRASH_INFO_KEY",
+                "TRAFFIC_CONTROL_DEVICE",
+                "DEVICE_CONDITION",
+                "FIRST_CRASH_TYPE",
+                "TRAFFICWAY_TYPE",
+                "ALIGNMENT",
+                "ROADWAY_SURFACE_COND",
+                "ROAD_DEFECT",
+                "REPORT_TYPE",
+                "CRASH_TYPE",
+                "DAMAGE",
+                "PRIM_CONTRIBUTORY_CAUSE",
+                "SEC_CONTRIBUTORY_CAUSE",
+                "MOST_SEVERE_INJURY",
+            ]
+        ].to_records(index=False).tolist()
 
+        insert_sql = """
+            INSERT INTO staging.dim_crash_info (
+                crash_info_key, traffic_control_device, device_condition, first_crash_type,
+                trafficway_type, alignment, roadway_surface_cond, road_defect, report_type,
+                crash_type, damage, prim_contributory_cause, sec_contributory_cause, most_severe_injury
+            ) VALUES %s
+        """
+
+        psycopg2.extras.execute_values(
+            cursor,
+            insert_sql,
+            records,
+            page_size=1000
+        )
         conn.commit()
 
+        # Create core table and copy data from staging
         logger.info(f"{module_tag} Creating core table.")
         cursor.execute(
             """
@@ -99,8 +109,7 @@ def load_dim_crash_info(filepath_in) -> None:
             );
             """
         )
-
-        cursor.execute("TRUNCATE core.dim_crash_info;")
+        cursor.execute("TRUNCATE core.dim_crash_info CASCADE;")
 
         logger.info(f"{module_tag} Copying data from staging to core.")
         cursor.execute(
@@ -110,20 +119,19 @@ def load_dim_crash_info(filepath_in) -> None:
                 trafficway_type, alignment, roadway_surface_cond, road_defect, report_type,
                 crash_type, damage, prim_contributory_cause, sec_contributory_cause, most_severe_injury
             )
-            SELECT 
+            SELECT
                 crash_info_key, traffic_control_device, device_condition, first_crash_type,
                 trafficway_type, alignment, roadway_surface_cond, road_defect, report_type,
                 crash_type, damage, prim_contributory_cause, sec_contributory_cause, most_severe_injury
             FROM staging.dim_crash_info;
             """
         )
-
         conn.commit()
+
         cursor.close()
         conn.close()
-
         logger.info(f"{module_tag} Successfully inserted dim_crash_info into database.")
 
     except Exception as e:
-        logger.error(f"{module_tag} Error in load_dim_crash_info: {str(e)}")
+        logger.error(f"{module_tag} Error in load_dim_crash_info: {e}")
         raise
