@@ -15,7 +15,7 @@ logger = setup_logger(__name__)
 
 
 def perform_transformation_crash(
-    filepath_in: str, fact_filepath_out: str, dim_filepath_out: str
+    filepath_in: str, fact_filepath_out: str, crash_info_filepath_out: str, location_filepath_out: str
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     module_tag = "[CRASH]"
     logger.info(f"{module_tag} Starting crash data transformation.")
@@ -25,17 +25,18 @@ def perform_transformation_crash(
     logger.info(
         f"{module_tag} Splitting transformed crash data into fact and dimension tables."
     )
-    fact_crash, dim_crash_info = split_crash(crash_df)
+    fact_crash, dim_crash_info, dim_location = split_crash(crash_df)
 
     logger.info(f"{module_tag} Crash data transformation completed successfully.")
 
     fact_crash.to_pickle(fact_filepath_out)
-    dim_crash_info.to_pickle(dim_filepath_out)
+    dim_crash_info.to_pickle(crash_info_filepath_out)
+    dim_location.to_pickle(location_filepath_out)
     logger.info(
-        f"{module_tag} Saved as a pickle in {fact_filepath_out} and {dim_filepath_out}."
+        f"{module_tag} Saved as a pickle in {fact_filepath_out}, {crash_info_filepath_out} and {location_filepath_out}."
     )
 
-    return fact_crash, dim_crash_info
+    return fact_crash, dim_crash_info, dim_location
 
 
 def perform_transformation_person(
@@ -63,8 +64,6 @@ def perform_transformation_vehicles(
     vehicle_df = transform_vehicle(filepath_in)
 
     dim_crash_info = pd.read_pickle(dim_crash_info_path)
-    crash_key_map = dim_crash_info.set_index("CRASH_RECORD_ID")["CRASH_INFO_KEY"]
-    vehicle_df["CRASH_INFO_KEY"] = vehicle_df["CRASH_RECORD_ID"].map(crash_key_map)
 
     vehicle_df["VEHICLE_KEY"] = vehicle_df.apply(
         lambda row: generate_surrogate_key(*[row[col] for col in vehicle_df.columns]),
@@ -106,26 +105,49 @@ def perform_make_dim_date(
 
     return dim_date
 
+# To jest już do transformowanie pomiędzy nimi, nazywa się transform_all ale te funkcje z góry też trzeba będzie wykonywać
+def transform_all(df_fact_crash:   pd.DataFrame,
+                  df_fact_weather: pd.DataFrame,
+                  df_dim_crash_info: pd.DataFrame,
+                  df_dim_person    : pd.DataFrame,
+                  df_dim_vehicle   : pd.DataFrame,
+                  df_dim_location  : pd.DataFrame):
+
+    # Dołączyć klucze do fact_crash [person_id, vehicle_id, location_id] (crash_info_id już jest z transform poprzedniego)
+    df_fact_crash = df_fact_crash.merge(df_dim_person[["CRASH_RECORD_ID", "PERSON_ID", "VEHICLE_ID"]], on='CRASH_RECORD_ID', how='inner')
+
+    # -- 
+        # tu dołączyć z location_id jak już Julka przygotuje :)
+    # --
+
+    # Wyrzucić niepotrzebne kolumny z innych wymiarów ewentualnie ale może nie trzeba
+
+
+
+
+
+
 
 def main():
     base_dir = "/opt/airflow"
+
     # source paths
-    crash_path_in = os.path.join(base_dir, "data","tmp","extracted","crashes.pkl")
-    weather_path_in =os.path.join(base_dir, "data","tmp","extracted", "weather.pkl")
+    crash_path_in    = os.path.join(base_dir, "data","tmp","extracted","crashes.pkl")
+    weather_path_in  = os.path.join(base_dir, "data","tmp","extracted", "weather.pkl")
     vehicles_path_in = os.path.join(base_dir, "data","tmp","extracted","vehicles.pkl")
-    person_path_in = os.path.join(base_dir, "data","tmp","extracted","people.pkl")
+    person_path_in   = os.path.join(base_dir, "data","tmp","extracted","people.pkl")
 
     # out paths
-    fact_crash_path = os.path.join(base_dir, "data","tmp","transformed","fact_crash.pkl")
+    fact_crash_path     = os.path.join(base_dir, "data","tmp","transformed","fact_crash.pkl")
     dim_crash_info_path = os.path.join(base_dir, "data","tmp","transformed","dim_crash_info.pkl")
-    fact_weather_path = os.path.join(base_dir, "data","tmp","transformed","fact_weather.pkl")
-    dim_vehicle_path = os.path.join(base_dir, "data","tmp","transformed","dim_vehicle.pkl")
-    dim_person_path = os.path.join(base_dir, "data","tmp","transformed","dim_people.pkl")
+    dim_location_path   = os.path.join(base_dir, "data","tmp","transformed","dim_location.pkl")
+    fact_weather_path   = os.path.join(base_dir, "data","tmp","transformed","fact_weather.pkl")
+    dim_vehicle_path    = os.path.join(base_dir, "data","tmp","transformed","dim_vehicle.pkl")
+    dim_person_path     = os.path.join(base_dir, "data","tmp","transformed","dim_people.pkl")
+    dim_date_path       = os.path.join(base_dir, "data","tmp","transformed","dim_date.pkl")
 
-    dim_date_path = os.path.join(base_dir, "data","tmp","transformed","dim_date.pkl")
-
-    fact_crash, dim_crash_info = perform_transformation_crash(
-        crash_path_in, fact_crash_path, dim_crash_info_path
+    fact_crash, dim_crash_info, dim_location = perform_transformation_crash(
+        crash_path_in, fact_crash_path, dim_crash_info_path, dim_location_path
     )
 
     fact_weather = perform_transformation_weather(

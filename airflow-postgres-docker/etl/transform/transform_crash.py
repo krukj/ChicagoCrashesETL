@@ -6,6 +6,7 @@ from .schemas import (
     COLUMNS_TO_DATE,
     COLUMNS_TO_FACT_CRASH,
     COLUMNS_TO_DIM_CRASH_INFO,
+    COLUMNS_TO_DIM_LOCATION
 )
 from .utils import fill_na, change_type, replace_value, generate_surrogate_key
 
@@ -98,6 +99,7 @@ def transform_crash(filepath_in: str) -> pd.DataFrame:
 def split_crash(df) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     dim_crash_info = df[COLUMNS_TO_DIM_CRASH_INFO].drop_duplicates()
+    dim_location = df[COLUMNS_TO_DIM_LOCATION].drop_duplicates()
     fact_crash = df[COLUMNS_TO_FACT_CRASH + ['date_id']].drop_duplicates()
 
     # generating surrogate keys
@@ -110,10 +112,21 @@ def split_crash(df) -> Tuple[pd.DataFrame, pd.DataFrame]:
             *[row[col] for col in COLUMNS_TO_DIM_CRASH_INFO]
         ),
         axis=1,
-    )) # dajemy tą kolumnę na początek (tu insert szybkie akurat xd ~Tomek)
+    ))
 
-    # łączenie fact_crash i dim_crash_info żeby mieć w fact_crash -> crash_info_id
+    dim_location.insert(0, "LOCATION_KEY", dim_location.apply(
+        lambda row: generate_surrogate_key(
+            *[row[col] for col in COLUMNS_TO_DIM_LOCATION]
+            ),
+        axis=1,
+    ))
+
+    # łączenie żeby fact_crash miało [CRASH_INFO_KEY i LOCATION_KEY]
     fact_crash = fact_crash.merge(dim_crash_info[["CRASH_RECORD_ID", "CRASH_INFO_KEY"]], on='CRASH_RECORD_ID', how='inner')
+    fact_crash = fact_crash.merge(dim_location[["CRASH_RECORD_ID", "LOCATION_KEY"]], on='CRASH_RECORD_ID', how='inner')
 
-    dim_crash_info.drop(columns=['CRASH_RECORD_ID'])
-    return fact_crash, dim_crash_info
+    # ta kolumna już niepotrzebna
+    dim_crash_info = dim_crash_info.drop(columns=['CRASH_RECORD_ID'])
+    dim_location = dim_location.drop(columns=['CRASH_RECORD_ID'])
+
+    return fact_crash, dim_crash_info, dim_location

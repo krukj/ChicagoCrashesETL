@@ -1,4 +1,4 @@
-############## CRASHES ####################
+######################## CRASHES ###########################
 
 COLUMNS_TO_DROP_CRASHES = [
     "CRASH_DATE_EST_I",
@@ -89,7 +89,16 @@ COLUMNS_TO_FACT_CRASH = [
     "INJURIES_UNKNOWN",
 ]
 
-############## PEOPLE ##################
+COLUMNS_TO_DIM_LOCATION = [
+    "CRASH_RECORD_ID",
+    "STREET_DIRECTION",
+    "STREET_NAME",
+    "STREET_NO",
+    "LATITUDE",
+    "LONGITUDE"
+]
+
+###################################### PEOPLE ########################################
 
 COLUMNS_TO_DROP_PEOPLE = [ 
     "SEAT_NO",           
