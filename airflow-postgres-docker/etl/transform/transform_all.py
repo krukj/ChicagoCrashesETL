@@ -91,8 +91,8 @@ def perform_transformation_weather(filepath_in: str, filepath_out: str) -> pd.Da
 
 def perform_make_dim_date(
     filepath_out: str,
-    start_date: datetime.date = datetime.date(2016, 1, 1),
-    end_date: datetime.date = datetime.date(2021, 12, 31)
+    start_date: datetime.datetime = datetime.datetime(2016, 1, 1, 0, 0),
+    end_date: datetime.datetime = datetime.datetime(2021, 12, 31, 23, 0)
     ) -> pd.DataFrame:
     module_tag = "[DATE]"
     logger.info(f"{module_tag} Starting dim_date making.")

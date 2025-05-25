@@ -22,11 +22,14 @@ def load_dim_date(filepath_in) -> None:
         cursor.execute("CREATE SCHEMA IF NOT EXISTS core;")
 
         logger.info(f"{module_tag} Creating table (staging).")
+        cursor.execute("DROP TABLE IF EXISTS staging.dim_date;")
+        cursor.execute("DROP TABLE IF EXISTS core.dim_date;")
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS staging.dim_date (
                 date_id INT PRIMARY KEY,
-                full_date DATE NOT NULL,
+                full_date TIMESTAMP NOT NULL,
+                hour SMALLINT NOT NULL,
                 year SMALLINT NOT NULL,
                 quarter SMALLINT NOT NULL,
                 month SMALLINT NOT NULL,
@@ -49,13 +52,14 @@ def load_dim_date(filepath_in) -> None:
             cursor.execute(
                 """
                 INSERT INTO staging.dim_date 
-                (date_id, full_date, year, quarter, month, month_name, day_of_month, day_of_week,
+                (date_id, full_date, hour, year, quarter, month, month_name, day_of_month, day_of_week,
                 day_name, is_weekend, week_of_year, is_holiday, holiday_name)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     row["date_id"],
                     row["full_date"],
+                    row["hour"],
                     row["year"],
                     row["quarter"],
                     row["month"],
@@ -78,7 +82,8 @@ def load_dim_date(filepath_in) -> None:
             """
             CREATE TABLE IF NOT EXISTS core.dim_date (
                 date_id INT PRIMARY KEY,
-                full_date DATE NOT NULL,
+                full_date TIMESTAMP NOT NULL,
+                hour SMALLINT NOT NULL,
                 year SMALLINT NOT NULL,
                 quarter SMALLINT NOT NULL,
                 month SMALLINT NOT NULL,
@@ -102,10 +107,10 @@ def load_dim_date(filepath_in) -> None:
         cursor.execute(
             """
             INSERT INTO core.dim_date
-            (date_id, full_date, year, quarter, month, month_name, day_of_month, day_of_week,
+            (date_id, full_date, hour, year, quarter, month, month_name, day_of_month, day_of_week,
             day_name, is_weekend, week_of_year, is_holiday, holiday_name)
             SELECT 
-            date_id, full_date, year, quarter, month, month_name, day_of_month, day_of_week,
+            date_id, full_date, hour, year, quarter, month, month_name, day_of_month, day_of_week,
             day_name, is_weekend, week_of_year, is_holiday, holiday_name
             FROM staging.dim_date
                     """
