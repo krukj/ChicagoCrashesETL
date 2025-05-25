@@ -22,8 +22,8 @@ def load_dim_date(filepath_in) -> None:
         cursor.execute("CREATE SCHEMA IF NOT EXISTS core;")
 
         logger.info(f"{module_tag} Creating table (staging).")
-        cursor.execute("DROP TABLE IF EXISTS staging.dim_date;")
-        cursor.execute("DROP TABLE IF EXISTS core.dim_date;")
+        # cursor.execute("TRUNCATE TABLE staging.dim_date;")
+        # cursor.execute("TRUNCATE TABLE core.dim_date;")
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS staging.dim_date (

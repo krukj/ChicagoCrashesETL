@@ -24,7 +24,9 @@
 # conditions: type: str, nazwa: conditions, nulle -> UNKNOWN
 # icon - wywalic
 # stations - wywalic
+from etl.logging_config import setup_logger
 
+logger = setup_logger(__name__)
 from .schemas import (
     COLUMNS_TO_DROP_WEATHER,
     COLUMNS_NULL_UNKNOWN_WEATHER,
@@ -73,8 +75,15 @@ def trasform_weather(filepath_in: str) -> pd.DataFrame:
     df["date_id"] = df["datetime"].dt.strftime('%Y%m%d%H').astype(int)
     df.insert(1, 'date_id', df.pop('date_id'))
 
+    COLS_TO_KEY = ["date_id", "winddir"]
     df.insert(0, "WEATHER_KEY", df.apply(
-        lambda row: generate_surrogate_key(row['date_id']), axis=1
+        lambda row: generate_surrogate_key(
+            *[row[col] for col in df.columns]
+            ),
+        axis=1,
     ))
+    # df.insert(0, "WEATHER_KEY", df.apply(
+    #     lambda row: generate_surrogate_key(row["date_id"])), axis=1
+    # )
 
     return df
