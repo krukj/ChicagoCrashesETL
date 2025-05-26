@@ -37,7 +37,6 @@ def make_dim_date(
         is_holiday = current_date.date() in us_holidays
         holiday_name = us_holidays.get(current_date.date()) if is_holiday else "None"
 
-
         date_list.append(
             [
                 date_id,

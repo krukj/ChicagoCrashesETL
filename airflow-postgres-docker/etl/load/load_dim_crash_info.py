@@ -52,24 +52,28 @@ def load_dim_crash_info(filepath_in) -> None:
 
         # Bulk insert into staging using execute_values
         logger.info(f"{module_tag} Inserting data into staging.")
-        records = dim_crash_info[
-            [
-                "CRASH_INFO_KEY",
-                "TRAFFIC_CONTROL_DEVICE",
-                "DEVICE_CONDITION",
-                "FIRST_CRASH_TYPE",
-                "TRAFFICWAY_TYPE",
-                "ALIGNMENT",
-                "ROADWAY_SURFACE_COND",
-                "ROAD_DEFECT",
-                "REPORT_TYPE",
-                "CRASH_TYPE",
-                "DAMAGE",
-                "PRIM_CONTRIBUTORY_CAUSE",
-                "SEC_CONTRIBUTORY_CAUSE",
-                "MOST_SEVERE_INJURY",
+        records = (
+            dim_crash_info[
+                [
+                    "CRASH_INFO_KEY",
+                    "TRAFFIC_CONTROL_DEVICE",
+                    "DEVICE_CONDITION",
+                    "FIRST_CRASH_TYPE",
+                    "TRAFFICWAY_TYPE",
+                    "ALIGNMENT",
+                    "ROADWAY_SURFACE_COND",
+                    "ROAD_DEFECT",
+                    "REPORT_TYPE",
+                    "CRASH_TYPE",
+                    "DAMAGE",
+                    "PRIM_CONTRIBUTORY_CAUSE",
+                    "SEC_CONTRIBUTORY_CAUSE",
+                    "MOST_SEVERE_INJURY",
+                ]
             ]
-        ].to_records(index=False).tolist()
+            .to_records(index=False)
+            .tolist()
+        )
 
         insert_sql = """
             INSERT INTO staging.dim_crash_info (
@@ -79,12 +83,7 @@ def load_dim_crash_info(filepath_in) -> None:
             ) VALUES %s
         """
 
-        psycopg2.extras.execute_values(
-            cursor,
-            insert_sql,
-            records,
-            page_size=100_000
-        )
+        psycopg2.extras.execute_values(cursor, insert_sql, records, page_size=100_000)
         conn.commit()
 
         # Create core table and copy data from staging

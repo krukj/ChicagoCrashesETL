@@ -5,6 +5,7 @@ from etl.logging_config import setup_logger
 logger = setup_logger(__name__)
 module_tag = "[fact_weather]"
 
+
 def load_fact_weather(filepath_in) -> None:
     try:
         logger.info(f"{module_tag} Starting to load fact_weather from pickle.")

@@ -26,7 +26,8 @@ def load_dim_vehicle(filepath_in) -> None:
 
         # staging table
         logger.info(f"{module_tag} Creating staging.dim_vehicle table.")
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS staging.dim_vehicle (
                 vehicle_key NUMERIC PRIMARY KEY,
                 crash_unit_id INT NOT NULL,
@@ -45,17 +46,36 @@ def load_dim_vehicle(filepath_in) -> None:
                 occupant_cnt INT,
                 first_contact_point VARCHAR(150)
             );
-        """)
+        """
+        )
         cursor.execute("TRUNCATE staging.dim_vehicle CASCADE;")
 
         # bulk insert staging - radykalna konwersja typów
         logger.info(f"{module_tag} Bulk inserting into staging.dim_vehicle.")
-        records = dim_vehicle[[
-            "VEHICLE_KEY", "CRASH_UNIT_ID", "CRASH_RECORD_ID", "UNIT_TYPE",
-            "NUM_PASSENGERS", "VEHICLE_ID", "MAKE", "MODEL", "VEHICLE_YEAR",
-            "VEHICLE_DEFECT", "VEHICLE_TYPE", "VEHICLE_USE", "TRAVEL_DIRECTION",
-            "MANEUVER", "OCCUPANT_CNT", "FIRST_CONTACT_POINT"
-        ]].to_records(index=False).tolist()
+        records = (
+            dim_vehicle[
+                [
+                    "VEHICLE_KEY",
+                    "CRASH_UNIT_ID",
+                    "CRASH_RECORD_ID",
+                    "UNIT_TYPE",
+                    "NUM_PASSENGERS",
+                    "VEHICLE_ID",
+                    "MAKE",
+                    "MODEL",
+                    "VEHICLE_YEAR",
+                    "VEHICLE_DEFECT",
+                    "VEHICLE_TYPE",
+                    "VEHICLE_USE",
+                    "TRAVEL_DIRECTION",
+                    "MANEUVER",
+                    "OCCUPANT_CNT",
+                    "FIRST_CONTACT_POINT",
+                ]
+            ]
+            .to_records(index=False)
+            .tolist()
+        )
 
         insert_sql = """
             INSERT INTO staging.dim_vehicle (
@@ -70,7 +90,8 @@ def load_dim_vehicle(filepath_in) -> None:
 
         # core table
         logger.info(f"{module_tag} Creating core.dim_vehicle table.")
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS core.dim_vehicle (
                 vehicle_key NUMERIC PRIMARY KEY,
                 crash_unit_id INT NOT NULL,
@@ -89,12 +110,15 @@ def load_dim_vehicle(filepath_in) -> None:
                 occupant_cnt INT,
                 first_contact_point VARCHAR(150)
             );
-        """)
+        """
+        )
         cursor.execute("TRUNCATE core.dim_vehicle CASCADE;")
 
         # copy staging → core
         logger.info(f"{module_tag} Copying data staging → core.")
-        cursor.execute("INSERT INTO core.dim_vehicle SELECT * FROM staging.dim_vehicle;")
+        cursor.execute(
+            "INSERT INTO core.dim_vehicle SELECT * FROM staging.dim_vehicle;"
+        )
         conn.commit()
 
         cursor.close()

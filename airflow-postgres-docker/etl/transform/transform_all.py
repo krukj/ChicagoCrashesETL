@@ -14,9 +14,7 @@ from etl.logging_config import setup_logger
 logger = setup_logger(__name__)
 
 
-def perform_transformation_crash(
-    filepath_in: str
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def perform_transformation_crash(filepath_in: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     module_tag = "[CRASH]"
     logger.info(f"{module_tag} Starting crash data transformation.")
 
@@ -32,9 +30,7 @@ def perform_transformation_crash(
     return fact_crash, dim_crash_info, dim_location
 
 
-def perform_transformation_person(
-    filepath_in: str
-    ) -> pd.DataFrame:
+def perform_transformation_person(filepath_in: str) -> pd.DataFrame:
     module_tag = "[PERSON]"
     logger.info(f"{module_tag} Starting people data transformation.")
 
@@ -44,9 +40,8 @@ def perform_transformation_person(
 
     return person_df
 
-def perform_transformation_vehicles(
-    filepath_in: str
-    ) -> pd.DataFrame:
+
+def perform_transformation_vehicles(filepath_in: str) -> pd.DataFrame:
     module_tag = "[VEHICLE]"
     logger.info(f"{module_tag} Starting vehicle data transformation.")
 
@@ -70,10 +65,11 @@ def perform_transformation_weather(filepath_in: str) -> pd.DataFrame:
 
     return weather_df
 
+
 def perform_make_dim_date(
     start_date: datetime.datetime = datetime.datetime(2016, 1, 1, 0, 0),
-    end_date: datetime.datetime = datetime.datetime(2021, 12, 31, 23, 0)
-    ) -> pd.DataFrame:
+    end_date: datetime.datetime = datetime.datetime(2021, 12, 31, 23, 0),
+) -> pd.DataFrame:
     module_tag = "[DATE]"
     logger.info(f"{module_tag} Starting dim_date making.")
 
@@ -83,107 +79,145 @@ def perform_make_dim_date(
 
     return dim_date
 
-# To jest już do transformowanie pomiędzy nimi, nazywa się transform_all ale te funkcje z góry też trzeba będzie wykonywać
-def transform_all(df_fact_crash:   pd.DataFrame,
-                  df_fact_weather: pd.DataFrame,
-                  df_dim_crash_info: pd.DataFrame,
-                  df_dim_person    : pd.DataFrame,
-                  df_dim_vehicle   : pd.DataFrame,
-                  df_dim_location  : pd.DataFrame,
-                  df_dim_date      : pd.DataFrame,
 
-                  fact_crash_path_out    : str,
-                  fact_weather_path_out  : str,
-                  dim_crash_info_path_out: str,
-                  dim_person_path_out    : str,
-                  dim_vehicle_path_out   : str,
-                  dim_location_path_out  : str,
-                  dim_date_path_out      : str):
+# To jest już do transformowanie pomiędzy nimi, nazywa się transform_all ale te funkcje z góry też trzeba będzie wykonywać
+def transform_all(
+    df_fact_crash: pd.DataFrame,
+    df_fact_weather: pd.DataFrame,
+    df_dim_crash_info: pd.DataFrame,
+    df_dim_person: pd.DataFrame,
+    df_dim_vehicle: pd.DataFrame,
+    df_dim_location: pd.DataFrame,
+    df_dim_date: pd.DataFrame,
+    fact_crash_path_out: str,
+    fact_weather_path_out: str,
+    dim_crash_info_path_out: str,
+    dim_person_path_out: str,
+    dim_vehicle_path_out: str,
+    dim_location_path_out: str,
+    dim_date_path_out: str,
+):
 
     # Dołączyć klucze do fact_crash [person_id, vehicle_id, location_id]
-    df_fact_crash = df_fact_crash.merge(df_dim_person[["CRASH_RECORD_ID", "PERSON_ID", "VEHICLE_ID"]], on='CRASH_RECORD_ID', how='inner')
+    df_fact_crash = df_fact_crash.merge(
+        df_dim_person[["CRASH_RECORD_ID", "PERSON_ID", "VEHICLE_ID"]],
+        on="CRASH_RECORD_ID",
+        how="inner",
+    )
 
     # Obsługa NULL w VEHICLE_ID - wygeneruj unikalne wartości
-    null_vehicle_mask = df_fact_crash['VEHICLE_ID'].isna()
+    null_vehicle_mask = df_fact_crash["VEHICLE_ID"].isna()
     if null_vehicle_mask.any():
-        max_vehicle_id = df_fact_crash['VEHICLE_ID'].max()
+        max_vehicle_id = df_fact_crash["VEHICLE_ID"].max()
         if pd.isna(max_vehicle_id):
             max_vehicle_id = 0
-        
+
         # Generuj unikalne ID dla NULL vehicle_id
         null_count = null_vehicle_mask.sum()
-        new_vehicle_ids = range(int(max_vehicle_id) + 1, int(max_vehicle_id) + 1 + null_count)
-        df_fact_crash.loc[null_vehicle_mask, 'VEHICLE_ID'] = new_vehicle_ids
+        new_vehicle_ids = range(
+            int(max_vehicle_id) + 1, int(max_vehicle_id) + 1 + null_count
+        )
+        df_fact_crash.loc[null_vehicle_mask, "VEHICLE_ID"] = new_vehicle_ids
         logger.info(f"[VEHICLE] Assigned {null_count} new vehicle IDs for NULL values")
 
     # NAJPIERW generuj klucze wymiarów PRZED usuwaniem duplikatów
-    df_dim_crash_info.insert(0, "CRASH_INFO_KEY", df_dim_crash_info.apply(
-        lambda row: generate_surrogate_key(
-            *[row[col] for col in df_dim_crash_info.columns.to_list()]
-        ),
-        axis=1,
-    ))
-
-    df_dim_location.insert(0, "LOCATION_KEY", df_dim_location.apply(
-        lambda row: generate_surrogate_key(
-            *[row[col] for col in df_dim_location.columns.to_list()]
+    df_dim_crash_info.insert(
+        0,
+        "CRASH_INFO_KEY",
+        df_dim_crash_info.apply(
+            lambda row: generate_surrogate_key(
+                *[row[col] for col in df_dim_crash_info.columns.to_list()]
             ),
-        axis=1,
-    ))
+            axis=1,
+        ),
+    )
+
+    df_dim_location.insert(
+        0,
+        "LOCATION_KEY",
+        df_dim_location.apply(
+            lambda row: generate_surrogate_key(
+                *[row[col] for col in df_dim_location.columns.to_list()]
+            ),
+            axis=1,
+        ),
+    )
 
     # Usuń duplikaty z wymiarów PRZED łączeniem z faktami
     logger.info(f"[LOCATION] Location records before dedup: {len(df_dim_location)}")
-    df_dim_crash_info = df_dim_crash_info.drop_duplicates(subset=['CRASH_INFO_KEY'])
-    df_dim_location = df_dim_location.drop_duplicates(subset=['LOCATION_KEY'])
-    
+    df_dim_crash_info = df_dim_crash_info.drop_duplicates(subset=["CRASH_INFO_KEY"])
+    df_dim_location = df_dim_location.drop_duplicates(subset=["LOCATION_KEY"])
+
     # Usuń problematyczny klucz 3707804392 i odpowiednie rekordy z faktów
     problematic_key = 3707804392
-    if problematic_key in df_dim_location['LOCATION_KEY'].values:
+    if problematic_key in df_dim_location["LOCATION_KEY"].values:
         # Znajdź CRASH_RECORD_ID powiązane z tym kluczem
-        problematic_crash_ids = df_dim_location[df_dim_location['LOCATION_KEY'] == problematic_key]['CRASH_RECORD_ID'].unique()
-        
+        problematic_crash_ids = df_dim_location[
+            df_dim_location["LOCATION_KEY"] == problematic_key
+        ]["CRASH_RECORD_ID"].unique()
+
         # Usuń z wymiarów
-        df_dim_location = df_dim_location[df_dim_location['LOCATION_KEY'] != problematic_key]
-        
+        df_dim_location = df_dim_location[
+            df_dim_location["LOCATION_KEY"] != problematic_key
+        ]
+
         # Usuń odpowiednie rekordy z faktów
         original_fact_count = len(df_fact_crash)
-        df_fact_crash = df_fact_crash[~df_fact_crash['CRASH_RECORD_ID'].isin(problematic_crash_ids)]
+        df_fact_crash = df_fact_crash[
+            ~df_fact_crash["CRASH_RECORD_ID"].isin(problematic_crash_ids)
+        ]
         removed_fact_count = original_fact_count - len(df_fact_crash)
-        
-        logger.warning(f"[LOCATION] Removed problematic key {problematic_key} and {removed_fact_count} related fact records")
-    
+
+        logger.warning(
+            f"[LOCATION] Removed problematic key {problematic_key} and {removed_fact_count} related fact records"
+        )
+
     logger.info(f"[LOCATION] Location records after dedup: {len(df_dim_location)}")
 
-    valid_vehicle_ids = df_dim_vehicle['VEHICLE_ID']
+    valid_vehicle_ids = df_dim_vehicle["VEHICLE_ID"]
     original_fact_count = len(df_fact_crash)
-    df_fact_crash = df_fact_crash[df_fact_crash['VEHICLE_ID'].isin(valid_vehicle_ids)]
+    df_fact_crash = df_fact_crash[df_fact_crash["VEHICLE_ID"].isin(valid_vehicle_ids)]
     removed_fact_count = original_fact_count - len(df_fact_crash)
-    logger.info(f"[VEHICLE] Removed {removed_fact_count} fact records with invalid vehicle IDs")
-    
+    logger.info(
+        f"[VEHICLE] Removed {removed_fact_count} fact records with invalid vehicle IDs"
+    )
+
     # Sprawdź, czy wszystkie CRASH_RECORD_ID z faktów mają odpowiedniki w wymiarach
-    valid_crash_info_ids = set(df_dim_crash_info['CRASH_RECORD_ID'].unique())
-    valid_location_ids = set(df_dim_location['CRASH_RECORD_ID'].unique())
-    
+    valid_crash_info_ids = set(df_dim_crash_info["CRASH_RECORD_ID"].unique())
+    valid_location_ids = set(df_dim_location["CRASH_RECORD_ID"].unique())
+
     # Usuń fakty bez odpowiedników w wymiarach
     df_fact_crash = df_fact_crash[
-        df_fact_crash['CRASH_RECORD_ID'].isin(valid_crash_info_ids) &
-        df_fact_crash['CRASH_RECORD_ID'].isin(valid_location_ids)
+        df_fact_crash["CRASH_RECORD_ID"].isin(valid_crash_info_ids)
+        & df_fact_crash["CRASH_RECORD_ID"].isin(valid_location_ids)
     ]
-    
+
     # DOPIERO TERAZ generuj klucz dla faktów
-    df_fact_crash.insert(0, "FACT_CRASH_KEY", df_fact_crash.apply(
-        lambda row: generate_surrogate_key(
-            *[row[col] for col in df_fact_crash.columns.to_list()]
+    df_fact_crash.insert(
+        0,
+        "FACT_CRASH_KEY",
+        df_fact_crash.apply(
+            lambda row: generate_surrogate_key(
+                *[row[col] for col in df_fact_crash.columns.to_list()]
+            ),
+            axis=1,
         ),
-        axis=1,
-    ))
+    )
 
     # Usuń duplikaty z faktów
-    df_fact_crash = df_fact_crash.drop_duplicates(subset=['FACT_CRASH_KEY'])
+    df_fact_crash = df_fact_crash.drop_duplicates(subset=["FACT_CRASH_KEY"])
 
     # Łącz z wymiarami
-    df_fact_crash = df_fact_crash.merge(df_dim_crash_info[["CRASH_RECORD_ID", "CRASH_INFO_KEY"]], on='CRASH_RECORD_ID', how='inner')
-    df_fact_crash = df_fact_crash.merge(df_dim_location[["CRASH_RECORD_ID", "LOCATION_KEY"]], on='CRASH_RECORD_ID', how='inner')
+    df_fact_crash = df_fact_crash.merge(
+        df_dim_crash_info[["CRASH_RECORD_ID", "CRASH_INFO_KEY"]],
+        on="CRASH_RECORD_ID",
+        how="inner",
+    )
+    df_fact_crash = df_fact_crash.merge(
+        df_dim_location[["CRASH_RECORD_ID", "LOCATION_KEY"]],
+        on="CRASH_RECORD_ID",
+        how="inner",
+    )
 
     # Sprawdź końcowe statystyki
     logger.info(f"[FINAL] Fact crash records: {len(df_fact_crash)}")
@@ -194,7 +228,9 @@ def transform_all(df_fact_crash:   pd.DataFrame,
     df_fact_crash.to_pickle(fact_crash_path_out)
     df_dim_crash_info.to_pickle(dim_crash_info_path_out)
     df_dim_location.to_pickle(dim_location_path_out)
-    logger.info(f"[CRASH] Saved as a pickle in {fact_crash_path_out}, {dim_crash_info_path_out} and {dim_location_path_out}.")
+    logger.info(
+        f"[CRASH] Saved as a pickle in {fact_crash_path_out}, {dim_crash_info_path_out} and {dim_location_path_out}."
+    )
 
     df_dim_person.to_pickle(dim_person_path_out)
     logger.info(f"[PERSON] Saved as a pickle in {dim_person_path_out}")
@@ -215,65 +251,72 @@ def transform_all(df_fact_crash:   pd.DataFrame,
         df_dim_person,
         df_dim_vehicle,
         df_dim_location,
-        df_dim_date
+        df_dim_date,
     )
+
 
 def main():
     base_dir = "/opt/airflow"
 
     # source paths
-    crash_path_in    = os.path.join(base_dir, "data","tmp","extracted","crashes.pkl")
-    weather_path_in  = os.path.join(base_dir, "data","tmp","extracted", "weather.pkl")
-    vehicles_path_in = os.path.join(base_dir, "data","tmp","extracted","vehicles.pkl")
-    person_path_in   = os.path.join(base_dir, "data","tmp","extracted","people.pkl")
+    crash_path_in = os.path.join(base_dir, "data", "tmp", "extracted", "crashes.pkl")
+    weather_path_in = os.path.join(base_dir, "data", "tmp", "extracted", "weather.pkl")
+    vehicles_path_in = os.path.join(
+        base_dir, "data", "tmp", "extracted", "vehicles.pkl"
+    )
+    person_path_in = os.path.join(base_dir, "data", "tmp", "extracted", "people.pkl")
 
     # out paths
-    fact_crash_path     = os.path.join(base_dir, "data","tmp","transformed","fact_crash.pkl")
-    dim_crash_info_path = os.path.join(base_dir, "data","tmp","transformed","dim_crash_info.pkl")
-    dim_location_path   = os.path.join(base_dir, "data","tmp","transformed","dim_location.pkl")
-    fact_weather_path   = os.path.join(base_dir, "data","tmp","transformed","fact_weather.pkl")
-    dim_vehicle_path    = os.path.join(base_dir, "data","tmp","transformed","dim_vehicle.pkl")
-    dim_person_path     = os.path.join(base_dir, "data","tmp","transformed","dim_people.pkl")
-    dim_date_path       = os.path.join(base_dir, "data","tmp","transformed","dim_date.pkl")
+    fact_crash_path = os.path.join(
+        base_dir, "data", "tmp", "transformed", "fact_crash.pkl"
+    )
+    dim_crash_info_path = os.path.join(
+        base_dir, "data", "tmp", "transformed", "dim_crash_info.pkl"
+    )
+    dim_location_path = os.path.join(
+        base_dir, "data", "tmp", "transformed", "dim_location.pkl"
+    )
+    fact_weather_path = os.path.join(
+        base_dir, "data", "tmp", "transformed", "fact_weather.pkl"
+    )
+    dim_vehicle_path = os.path.join(
+        base_dir, "data", "tmp", "transformed", "dim_vehicle.pkl"
+    )
+    dim_person_path = os.path.join(
+        base_dir, "data", "tmp", "transformed", "dim_people.pkl"
+    )
+    dim_date_path = os.path.join(base_dir, "data", "tmp", "transformed", "dim_date.pkl")
 
     fact_crash, dim_crash_info, dim_location = perform_transformation_crash(
         crash_path_in
     )
 
-    fact_weather = perform_transformation_weather(
-        weather_path_in
-    )
-    dim_vehicle = perform_transformation_vehicles(
-        vehicles_path_in
-    )
+    fact_weather = perform_transformation_weather(weather_path_in)
+    dim_vehicle = perform_transformation_vehicles(vehicles_path_in)
 
-    dim_person = perform_transformation_person(
-        person_path_in
-    )
+    dim_person = perform_transformation_person(person_path_in)
 
-    dim_date = perform_make_dim_date(
-    )
+    dim_date = perform_make_dim_date()
 
     ### Teraz wszystko:
 
     tables = transform_all(
-        df_fact_crash    =fact_crash,
-        df_fact_weather  =fact_weather,
+        df_fact_crash=fact_crash,
+        df_fact_weather=fact_weather,
         df_dim_crash_info=dim_crash_info,
-        df_dim_person    =dim_person,
-        df_dim_vehicle   =dim_vehicle,
-        df_dim_location  =dim_location,
-        df_dim_date      =dim_date,
-
+        df_dim_person=dim_person,
+        df_dim_vehicle=dim_vehicle,
+        df_dim_location=dim_location,
+        df_dim_date=dim_date,
         fact_crash_path_out=fact_crash_path,
         fact_weather_path_out=fact_weather_path,
         dim_crash_info_path_out=dim_crash_info_path,
         dim_person_path_out=dim_person_path,
         dim_vehicle_path_out=dim_vehicle_path,
         dim_location_path_out=dim_location_path,
-        dim_date_path_out=dim_date_path
+        dim_date_path_out=dim_date_path,
     )
-    
+
 
 if __name__ == "__main__":
     main()

@@ -24,7 +24,8 @@ def load_dim_person(filepath_in) -> None:
 
         # create & truncate staging table
         logger.info(f"{module_tag} Creating staging.dim_person table.")
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS staging.dim_person (
                 person_id VARCHAR(150) PRIMARY KEY,
                 person_type VARCHAR(150) NOT NULL,
@@ -47,20 +48,38 @@ def load_dim_person(filepath_in) -> None:
                 valid_to NUMERIC NOT NULL,
                 is_current BOOLEAN NOT NULL
             );
-        """)
+        """
+        )
         cursor.execute("TRUNCATE staging.dim_person CASCADE;")
-    
 
         # bulk insert via execute_values
         logger.info(f"{module_tag} Bulk inserting into staging.dim_person.")
         # replace NaNs with None
         records = (
-            dim_person[[
-                "PERSON_ID","PERSON_TYPE","date_id","CRASH_RECORD_ID","VEHICLE_ID",
-                "CRASH_DATE","SEX","AGE","SAFETY_EQUIPMENT","AIRBAG_DEPLOYED","EJECTION",
-                "INJURY_CLASSIFICATION","DRIVER_ACTION","DRIVER_VISION","PHYSICAL_CONDITION",
-                "BAC_RESULT","BAC_RESULT VALUE","VALID_FROM","VALID_TO","IS_CURRENT"
-            ]]
+            dim_person[
+                [
+                    "PERSON_ID",
+                    "PERSON_TYPE",
+                    "date_id",
+                    "CRASH_RECORD_ID",
+                    "VEHICLE_ID",
+                    "CRASH_DATE",
+                    "SEX",
+                    "AGE",
+                    "SAFETY_EQUIPMENT",
+                    "AIRBAG_DEPLOYED",
+                    "EJECTION",
+                    "INJURY_CLASSIFICATION",
+                    "DRIVER_ACTION",
+                    "DRIVER_VISION",
+                    "PHYSICAL_CONDITION",
+                    "BAC_RESULT",
+                    "BAC_RESULT VALUE",
+                    "VALID_FROM",
+                    "VALID_TO",
+                    "IS_CURRENT",
+                ]
+            ]
             .where(pd.notnull(dim_person), None)
             .to_records(index=False)
             .tolist()
@@ -74,14 +93,13 @@ def load_dim_person(filepath_in) -> None:
                 valid_from, valid_to, is_current
             ) VALUES %s
         """
-        psycopg2.extras.execute_values(
-            cursor, insert_sql, records, page_size=100_000
-        )
+        psycopg2.extras.execute_values(cursor, insert_sql, records, page_size=100_000)
         conn.commit()
 
         # create & truncate core table
         logger.info(f"{module_tag} Creating core.dim_person table.")
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS core.dim_person (
                 person_id VARCHAR(150) PRIMARY KEY,
                 person_type VARCHAR(150) NOT NULL,
@@ -104,14 +122,17 @@ def load_dim_person(filepath_in) -> None:
                 valid_to NUMERIC NOT NULL,
                 is_current BOOLEAN NOT NULL
             );
-        """)
+        """
+        )
         cursor.execute("TRUNCATE core.dim_person CASCADE;")
 
         logger.info(f"{module_tag} Copying data staging -> core.")
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO core.dim_person
             SELECT * FROM staging.dim_person;
-        """)
+        """
+        )
         conn.commit()
 
         cursor.close()
