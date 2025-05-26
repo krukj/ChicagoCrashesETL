@@ -80,7 +80,7 @@ def transform_crash(filepath_in: str) -> pd.DataFrame:
 
     # Int handling
     df = fill_na(df, COLUMNS_TO_INT_CRASHES, -1)
-    df = change_type(df, COLUMNS_TO_INT_CRASHES, "Int64")
+    # df = change_type(df, COLUMNS_TO_INT_CRASHES, "int")
 
     # Float handling
     df = fill_na(df, COLUMNS_TO_FLOAT_CRASHES, -999)
@@ -102,6 +102,7 @@ def split_crash(df) -> Tuple[pd.DataFrame, pd.DataFrame]:
     dim_location = df[COLUMNS_TO_DIM_LOCATION].drop_duplicates()
     fact_crash = df[COLUMNS_TO_FACT_CRASH + ['date_id']].drop_duplicates()
 
+    cols_to_key = ["CRASH_"]
     # generating surrogate keys
     fact_crash.insert(0, "FACT_CRASH_KEY", fact_crash.apply(
         lambda row: generate_surrogate_key(

@@ -96,7 +96,7 @@ def transform_vehicle(filepath_in: str) -> pd.DataFrame:
     df['OCCUPANT_CNT'] = df['OCCUPANT_CNT'] + 1
     df = change_type(df, COLUMNS_TO_INT_VEHICLES, "Int64")
 
-    vehicle_key_cols = ["CRASH_RECORD_ID", "CRASH_UNIT_ID"]
+    vehicle_key_cols = df.columns.to_list()
 
     df["VEHICLE_KEY"] = df.apply(
         lambda row: generate_surrogate_key(*[row[col] for col in vehicle_key_cols]),

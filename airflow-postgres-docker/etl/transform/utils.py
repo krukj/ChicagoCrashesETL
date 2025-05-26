@@ -77,6 +77,6 @@ def generate_surrogate_key(*args) -> int:
     key_string = "|".join(str(arg).lower().strip() for arg in args)
     hash_bytes = hashlib.sha256(key_string.encode("utf-8")).digest()
 
-    bigint = int.from_bytes(hash_bytes[:8], byteorder="big", signed=False)
+    bigint = int.from_bytes(hash_bytes[:4], byteorder="big", signed=False)
 
     return bigint

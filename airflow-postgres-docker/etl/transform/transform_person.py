@@ -55,6 +55,18 @@ def transform_person(filepath_in: str) -> pd.DataFrame:
         df["CRASH_DATE"], format="%m/%d/%Y %I:%M:%S %p"
     )
 
+    # Handle missing VEHICLE_IDs
+    mask = df["VEHICLE_ID"].isna()
+    if mask.any():
+        df.loc[mask, "VEHICLE_ID"] = df.loc[mask].apply(
+            lambda row: generate_surrogate_key(
+                row["CRASH_RECORD_ID"], row["PERSON_ID"]
+            ),
+            axis=1
+        )
+        # df = change_type(df, ["VEHICLE_ID"], "Int64")
+    
+
     # Surogate key
     cols_to_surrogate = ["PERSON_ID", "CRASH_RECORD_ID"]
     df.insert(0, "PERSON_KEY", df.apply(
