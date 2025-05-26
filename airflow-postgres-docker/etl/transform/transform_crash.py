@@ -102,35 +102,37 @@ def split_crash(df) -> Tuple[pd.DataFrame, pd.DataFrame]:
     dim_location = df[COLUMNS_TO_DIM_LOCATION].drop_duplicates()
     fact_crash = df[COLUMNS_TO_FACT_CRASH + ['date_id']].drop_duplicates()
 
-    cols_to_key = ["CRASH_"]
-    # generating surrogate keys
-    fact_crash.insert(0, "FACT_CRASH_KEY", fact_crash.apply(
-        lambda row: generate_surrogate_key(
-            *[row[col] for col in COLUMNS_TO_FACT_CRASH]
-        ),
-        axis=1,
-    ))
+    # to w transform_all bo się jebie
 
-    dim_crash_info.insert(0, "CRASH_INFO_KEY", dim_crash_info.apply(
-        lambda row: generate_surrogate_key(
-            *[row[col] for col in COLUMNS_TO_DIM_CRASH_INFO]
-        ),
-        axis=1,
-    ))
+    # cols_to_key = ["CRASH_RECORD_ID"]
+    # # generating surrogate keys
+    # fact_crash.insert(0, "FACT_CRASH_KEY", fact_crash.apply(
+    #     lambda row: generate_surrogate_key(
+    #         *[row[col] for col in COLUMNS_TO_FACT_CRASH]
+    #     ),
+    #     axis=1,
+    # ))
 
-    dim_location.insert(0, "LOCATION_KEY", dim_location.apply(
-        lambda row: generate_surrogate_key(
-            *[row[col] for col in COLUMNS_TO_DIM_LOCATION]
-            ),
-        axis=1,
-    ))
+    # dim_crash_info.insert(0, "CRASH_INFO_KEY", dim_crash_info.apply(
+    #     lambda row: generate_surrogate_key(
+    #         *[row[col] for col in COLUMNS_TO_DIM_CRASH_INFO]
+    #     ),
+    #     axis=1,
+    # ))
+
+    # dim_location.insert(0, "LOCATION_KEY", dim_location.apply(
+    #     lambda row: generate_surrogate_key(
+    #         *[row[col] for col in COLUMNS_TO_DIM_LOCATION]
+    #         ),
+    #     axis=1,
+    # ))
 
     # łączenie żeby fact_crash miało [CRASH_INFO_KEY i LOCATION_KEY]
-    fact_crash = fact_crash.merge(dim_crash_info[["CRASH_RECORD_ID", "CRASH_INFO_KEY"]], on='CRASH_RECORD_ID', how='inner')
-    fact_crash = fact_crash.merge(dim_location[["CRASH_RECORD_ID", "LOCATION_KEY"]], on='CRASH_RECORD_ID', how='inner')
+    # fact_crash = fact_crash.merge(dim_crash_info[["CRASH_RECORD_ID", "CRASH_INFO_KEY"]], on='CRASH_RECORD_ID', how='inner')
+    # fact_crash = fact_crash.merge(dim_location[["CRASH_RECORD_ID", "LOCATION_KEY"]], on='CRASH_RECORD_ID', how='inner')
 
     # ta kolumna już niepotrzebna
-    dim_crash_info = dim_crash_info.drop(columns=['CRASH_RECORD_ID'])
-    dim_location = dim_location.drop(columns=['CRASH_RECORD_ID'])
+    # dim_crash_info = dim_crash_info.drop(columns=['CRASH_RECORD_ID'])
+    # dim_location = dim_location.drop(columns=['CRASH_RECORD_ID'])
 
     return fact_crash, dim_crash_info, dim_location

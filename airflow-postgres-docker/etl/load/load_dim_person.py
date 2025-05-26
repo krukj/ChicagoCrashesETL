@@ -75,7 +75,7 @@ def load_dim_person(filepath_in) -> None:
             ) VALUES %s
         """
         psycopg2.extras.execute_values(
-            cursor, insert_sql, records, page_size=1000
+            cursor, insert_sql, records, page_size=100_000
         )
         conn.commit()
 

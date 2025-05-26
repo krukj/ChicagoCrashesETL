@@ -23,8 +23,8 @@ def load_dim_crash_info(filepath_in) -> None:
 
         # Drop old tables if they exist
         logger.info(f"{module_tag} Dropping old tables.")
-        cursor.execute("DROP TABLE IF EXISTS staging.dim_crash_info;")
-        cursor.execute("DROP TABLE IF EXISTS core.dim_crash_info;")
+        cursor.execute("DROP TABLE IF EXISTS staging.dim_crash_info CASCADE;")
+        cursor.execute("DROP TABLE IF EXISTS core.dim_crash_info CASCADE;")
 
         # Create staging table
         logger.info(f"{module_tag} Creating staging table.")
@@ -83,7 +83,7 @@ def load_dim_crash_info(filepath_in) -> None:
             cursor,
             insert_sql,
             records,
-            page_size=1000
+            page_size=100_000
         )
         conn.commit()
 

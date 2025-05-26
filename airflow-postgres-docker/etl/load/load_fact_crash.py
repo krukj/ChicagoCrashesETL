@@ -7,95 +7,18 @@ from etl.logging_config import setup_logger
 logger = setup_logger(__name__)
 module_tag = "[fact_crash]"
 
-def validate_foreign_keys(fact_crash_df, cursor):
-    """
-    Validates foreign key constraints before insertion
-    """
-    logger.info(f"{module_tag} Validating foreign key constraints...")
-    
-    # Check vehicle_key
-    cursor.execute("SELECT vehicle_code FROM staging.dim_vehicle")
-    valid_vehicle_keys = set(row[0] for row in cursor.fetchall())
-    
-    invalid_vehicle_keys = set(fact_crash_df['VEHICLE_ID'].unique()) - valid_vehicle_keys
-    if invalid_vehicle_keys:
-        logger.warning(f"{module_tag} Found {len(invalid_vehicle_keys)} invalid vehicle keys")
-        logger.warning(f"{module_tag} Sample invalid keys: {list(invalid_vehicle_keys)[:10]}")
-        
-        # Remove or replace invalid keys
-        logger.info(f"{module_tag} Removing rows with invalid vehicle keys...")
-        initial_count = len(fact_crash_df)
-        fact_crash_df = fact_crash_df[fact_crash_df['VEHICLE_ID'].isin(valid_vehicle_keys)]
-        final_count = len(fact_crash_df)
-        logger.info(f"{module_tag} Removed {initial_count - final_count} rows with invalid vehicle keys")
-    
-    # Check person_id
-    cursor.execute("SELECT person_id FROM staging.dim_person")
-    valid_person_ids = set(row[0] for row in cursor.fetchall())
-    
-    invalid_person_ids = set(fact_crash_df['PERSON_ID'].unique()) - valid_person_ids
-    if invalid_person_ids:
-        logger.warning(f"{module_tag} Found {len(invalid_person_ids)} invalid person IDs")
-        logger.warning(f"{module_tag} Sample invalid IDs: {list(invalid_person_ids)[:10]}")
-        
-        # Remove rows with invalid person IDs
-        initial_count = len(fact_crash_df)
-        fact_crash_df = fact_crash_df[fact_crash_df['PERSON_ID'].isin(valid_person_ids)]
-        final_count = len(fact_crash_df)
-        logger.info(f"{module_tag} Removed {initial_count - final_count} rows with invalid person IDs")
-    
-    # Check crash_info_key
-    cursor.execute("SELECT crash_info_key FROM staging.dim_crash_info")
-    valid_crash_info_keys = set(row[0] for row in cursor.fetchall())
-    
-    invalid_crash_info_keys = set(fact_crash_df['CRASH_INFO_KEY'].unique()) - valid_crash_info_keys
-    if invalid_crash_info_keys:
-        logger.warning(f"{module_tag} Found {len(invalid_crash_info_keys)} invalid crash info keys")
-        
-        initial_count = len(fact_crash_df)
-        fact_crash_df = fact_crash_df[fact_crash_df['CRASH_INFO_KEY'].isin(valid_crash_info_keys)]
-        final_count = len(fact_crash_df)
-        logger.info(f"{module_tag} Removed {initial_count - final_count} rows with invalid crash info keys")
-    
-    # Check location_key  
-    cursor.execute("SELECT location_key FROM staging.dim_location")
-    valid_location_keys = set(row[0] for row in cursor.fetchall())
-    
-    invalid_location_keys = set(fact_crash_df['LOCATION_KEY'].unique()) - valid_location_keys
-    if invalid_location_keys:
-        logger.warning(f"{module_tag} Found {len(invalid_location_keys)} invalid location keys")
-        
-        initial_count = len(fact_crash_df)
-        fact_crash_df = fact_crash_df[fact_crash_df['LOCATION_KEY'].isin(valid_location_keys)]
-        final_count = len(fact_crash_df)
-        logger.info(f"{module_tag} Removed {initial_count - final_count} rows with invalid location keys")
-    
-    # Check date_id
-    cursor.execute("SELECT date_id FROM staging.dim_date")
-    valid_date_ids = set(row[0] for row in cursor.fetchall())
-    
-    invalid_date_ids = set(fact_crash_df['date_id'].unique()) - valid_date_ids
-    if invalid_date_ids:
-        logger.warning(f"{module_tag} Found {len(invalid_date_ids)} invalid date IDs")
-        
-        initial_count = len(fact_crash_df)
-        fact_crash_df = fact_crash_df[fact_crash_df['date_id'].isin(valid_date_ids)]
-        final_count = len(fact_crash_df)
-        logger.info(f"{module_tag} Removed {initial_count - final_count} rows with invalid date IDs")
-    
-    return fact_crash_df
-
 def load_fact_crash(filepath_in) -> None:
     try:
         logger.info(f"{module_tag} Loading fact_crash from pickle: {filepath_in}")
         fact_crash = pd.read_pickle(filepath_in)
 
-        # Remove duplicates
+        # Remove duplicates dla pewności
         dups = fact_crash.duplicated(subset=["FACT_CRASH_KEY"]).sum()
-        logger.info(f"{module_tag} Found {dups} duplicate FACT_CRASH_KEY records. Removing duplicates.")
-        fact_crash = fact_crash.drop_duplicates(subset=["FACT_CRASH_KEY"])
+        if dups != 0:
+            logger.info(f"{module_tag} Found {dups} duplicate FACT_CRASH_KEY records. Removing duplicates.")
+            fact_crash = fact_crash.drop_duplicates(subset=["FACT_CRASH_KEY"])
 
-        ################3
+        ################
         float_columns = ['VEHICLE_ID', 'CRASH_INFO_KEY', 'LOCATION_KEY', 'FACT_CRASH_KEY']
         for col in float_columns:
             if col in fact_crash.columns:
@@ -104,13 +27,7 @@ def load_fact_crash(filepath_in) -> None:
                 print(f"  NaN count: {fact_crash[col].isna().sum()}")
                 print(f"  Non-integer values: {fact_crash[col][fact_crash[col] != fact_crash[col].round()].head()}")
                 print(f"  Sample values: {fact_crash[col].head()}")
-        ########################3
-        
-        # Convert float keys to int to avoid .0 in the data
-        float_columns = ['VEHICLE_ID']
-        for col in float_columns:
-            if col in fact_crash.columns:
-                fact_crash[col] = fact_crash[col].astype('int64')
+        ########################
         
         logger.info(f"{module_tag} Connecting to Postgres.")
         hook = PostgresHook(postgres_conn_id="postgres_default")
@@ -123,9 +40,9 @@ def load_fact_crash(filepath_in) -> None:
         # Validate foreign keys before creating table
         # fact_crash = validate_foreign_keys(fact_crash, cursor)
         
-        if len(fact_crash) == 0:
-            logger.error(f"{module_tag} No valid records left after foreign key validation!")
-            raise ValueError("No valid records to insert")
+        # if len(fact_crash) == 0:
+        #     logger.error(f"{module_tag} No valid records left after foreign key validation!")
+        #     raise ValueError("No valid records to insert")
 
         logger.info(f"{module_tag} Creating staging.fact_crash table.")
         cursor.execute("""
@@ -144,12 +61,12 @@ def load_fact_crash(filepath_in) -> None:
                 crash_info_key NUMERIC NOT NULL,
                 location_key NUMERIC NOT NULL,
                 person_id VARCHAR(150) NOT NULL,
-                -- vehicle_key NUMERIC NOT NULL,
+                vehicle_id NUMERIC NOT NULL,
                 FOREIGN KEY (date_id) REFERENCES staging.dim_date(date_id),
                 FOREIGN KEY (crash_info_key) REFERENCES staging.dim_crash_info(crash_info_key),
                 FOREIGN KEY (location_key) REFERENCES staging.dim_location(location_key),
                 FOREIGN KEY (person_id) REFERENCES staging.dim_person(person_id),
-                -- FOREIGN KEY (vehicle_key) REFERENCES staging.dim_vehicle(vehicle_key)
+                FOREIGN KEY (vehicle_id) REFERENCES staging.dim_vehicle(vehicle_id)
             );
         """)
         cursor.execute("TRUNCATE staging.fact_crash CASCADE;")
@@ -162,8 +79,8 @@ def load_fact_crash(filepath_in) -> None:
         logger.info(f"{module_tag} Available columns: {available_columns}")
         
         # Use the correct column names based on what's actually in the DataFrame
-        vehicle_col = "VEHICLE_KEY" if "VEHICLE_KEY" in available_columns else "VEHICLE_ID"
-        person_col = "PERSON_ID" if "PERSON_ID" in available_columns else "PERSON_KEY"
+        vehicle_col = "VEHICLE_ID"
+        person_col = "PERSON_ID"
         
         records = fact_crash[[
             "FACT_CRASH_KEY", "CRASH_RECORD_ID", "NUM_UNITS", "INJURIES_TOTAL",
@@ -177,11 +94,11 @@ def load_fact_crash(filepath_in) -> None:
                 fact_crash_key, crash_record_id, num_units, injuries_total, injuries_fatal,
                 injuries_incapacitating, injuries_non_incapacitating, injuries_reported_not_evident,
                 injuries_no_indication, injuries_unknown, date_id, crash_info_key,
-                location_key, person_id, vehicle_key
+                location_key, person_id, vehicle_id
             ) VALUES %s
         """
         psycopg2.extras.execute_values(
-            cursor, insert_sql, records, page_size=1000
+            cursor, insert_sql, records, page_size=100_000
         )
         conn.commit()
 
@@ -203,12 +120,12 @@ def load_fact_crash(filepath_in) -> None:
                 crash_info_key NUMERIC NOT NULL,
                 location_key NUMERIC NOT NULL,
                 person_id VARCHAR(150) NOT NULL,
-                vehicle_key NUMERIC NOT NULL,
+                vehicle_id NUMERIC NOT NULL,
                 FOREIGN KEY (date_id) REFERENCES core.dim_date(date_id),
                 FOREIGN KEY (crash_info_key) REFERENCES core.dim_crash_info(crash_info_key),
                 FOREIGN KEY (location_key) REFERENCES core.dim_location(location_key),
                 FOREIGN KEY (person_id) REFERENCES core.dim_person(person_id),
-                FOREIGN KEY (vehicle_key) REFERENCES core.dim_vehicle(vehicle_key)
+                FOREIGN KEY (vehicle_id) REFERENCES core.dim_vehicle(vehicle_id)
             );
         """)
         cursor.execute("TRUNCATE core.fact_crash CASCADE;")
