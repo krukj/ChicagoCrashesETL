@@ -27,6 +27,7 @@ def load_dim_person(filepath_in) -> None:
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS staging.dim_person (
+                person_key NUMERIC,
                 person_id VARCHAR(150) PRIMARY KEY,
                 person_type VARCHAR(150) NOT NULL,
                 date_id NUMERIC NOT NULL,
@@ -57,7 +58,7 @@ def load_dim_person(filepath_in) -> None:
         # replace NaNs with None
         records = (
             dim_person[
-                [
+                ["PERSON_KEY",
                     "PERSON_ID",
                     "PERSON_TYPE",
                     "date_id",
@@ -87,7 +88,7 @@ def load_dim_person(filepath_in) -> None:
 
         insert_sql = """
             INSERT INTO staging.dim_person (
-                person_id, person_type, date_id, crash_record_id, vehicle_id, crash_date,
+                person_key, person_id, person_type, date_id, crash_record_id, vehicle_id, crash_date,
                 sex, age, safety_equipment, airbag_deployed, ejection, injury_classification,
                 driver_action, driver_vision, physical_condition, bac_result, bac_result_value,
                 valid_from, valid_to, is_current
@@ -101,6 +102,7 @@ def load_dim_person(filepath_in) -> None:
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS core.dim_person (
+                person_key NUMERIC,
                 person_id VARCHAR(150) PRIMARY KEY,
                 person_type VARCHAR(150) NOT NULL,
                 date_id NUMERIC NOT NULL,

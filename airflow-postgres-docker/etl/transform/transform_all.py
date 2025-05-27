@@ -67,8 +67,8 @@ def perform_transformation_weather(filepath_in: str) -> pd.DataFrame:
 
 
 def perform_make_dim_date(
-    start_date: datetime.datetime = datetime.datetime(2016, 1, 1, 0, 0),
-    end_date: datetime.datetime = datetime.datetime(2021, 12, 31, 23, 0),
+    start_date: datetime.datetime = datetime.datetime(2013, 1, 1, 0, 0),
+    end_date: datetime.datetime = datetime.datetime(2025, 12, 31, 23, 0),
 ) -> pd.DataFrame:
     module_tag = "[DATE]"
     logger.info(f"{module_tag} Starting dim_date making.")
@@ -96,6 +96,7 @@ def transform_all(
     dim_vehicle_path_out: str,
     dim_location_path_out: str,
     dim_date_path_out: str,
+    removed_records_path: str,
 ):
 
     # Dołączyć klucze do fact_crash [person_id, vehicle_id, location_id]
@@ -148,6 +149,7 @@ def transform_all(
     df_dim_crash_info = df_dim_crash_info.drop_duplicates(subset=["CRASH_INFO_KEY"])
     df_dim_location = df_dim_location.drop_duplicates(subset=["LOCATION_KEY"])
 
+    df_fact_crash_remove = None
     # Usuń problematyczny klucz 3707804392 i odpowiednie rekordy z faktów
     problematic_key = 3707804392
     if problematic_key in df_dim_location["LOCATION_KEY"].values:
@@ -163,6 +165,10 @@ def transform_all(
 
         # Usuń odpowiednie rekordy z faktów
         original_fact_count = len(df_fact_crash)
+        df_fact_crash_remove = df_fact_crash["CRASH_RECORD_ID"].isin(
+            problematic_crash_ids
+        )
+
         df_fact_crash = df_fact_crash[
             ~df_fact_crash["CRASH_RECORD_ID"].isin(problematic_crash_ids)
         ]
@@ -176,10 +182,29 @@ def transform_all(
 
     valid_vehicle_ids = df_dim_vehicle["VEHICLE_ID"]
     original_fact_count = len(df_fact_crash)
+
+    if df_fact_crash_remove is not None:
+        df_fact_crash_remove = pd.concat(
+            [
+                df_fact_crash_remove,
+                df_fact_crash[~df_fact_crash["VEHICLE_ID"].isin(valid_vehicle_ids)],
+            ]
+        )
+    else:
+        df_fact_crash_remove = df_fact_crash[
+            ~df_fact_crash["VEHICLE_ID"].isin(valid_vehicle_ids)
+        ]
+
+    df_fact_crash_remove.to_pickle(
+        os.path.join(removed_records_path, "removed_fact_crash.pkl")
+    )
     df_fact_crash = df_fact_crash[df_fact_crash["VEHICLE_ID"].isin(valid_vehicle_ids)]
     removed_fact_count = original_fact_count - len(df_fact_crash)
     logger.info(
         f"[VEHICLE] Removed {removed_fact_count} fact records with invalid vehicle IDs"
+    )
+    logger.info(
+        f"[VEHICLE] & [LOCATION] Removed records saved to {removed_records_path}"
     )
 
     # Sprawdź, czy wszystkie CRASH_RECORD_ID z faktów mają odpowiedniki w wymiarach
@@ -299,7 +324,7 @@ def main():
     dim_date = perform_make_dim_date()
 
     ### Teraz wszystko:
-
+    removed_path = os.path.join(base_dir, "data", "tmp", "transformed", "removed")
     tables = transform_all(
         df_fact_crash=fact_crash,
         df_fact_weather=fact_weather,
@@ -315,6 +340,7 @@ def main():
         dim_vehicle_path_out=dim_vehicle_path,
         dim_location_path_out=dim_location_path,
         dim_date_path_out=dim_date_path,
+        removed_records_path=removed_path,
     )
 
 

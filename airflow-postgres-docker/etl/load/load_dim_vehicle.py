@@ -23,6 +23,30 @@ def load_dim_vehicle(filepath_in) -> None:
         # schemas
         cursor.execute("CREATE SCHEMA IF NOT EXISTS staging;")
         cursor.execute("CREATE SCHEMA IF NOT EXISTS core;")
+        
+        # Check if tables exist and rename column if needed
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_schema = 'core' 
+            AND table_name = 'dim_vehicle' 
+            AND column_name = 'vehicle_code'
+        """)
+        if cursor.fetchone():
+            logger.info(f"{module_tag} Renaming vehicle_code to vehicle_id in existing tables")
+            cursor.execute("ALTER TABLE core.dim_vehicle RENAME COLUMN vehicle_code TO vehicle_id;")
+            conn.commit()
+            
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_schema = 'staging' 
+            AND table_name = 'dim_vehicle' 
+            AND column_name = 'vehicle_code'
+        """)
+        if cursor.fetchone():
+            cursor.execute("ALTER TABLE staging.dim_vehicle RENAME COLUMN vehicle_code TO vehicle_id;")
+            conn.commit()
 
         # staging table
         logger.info(f"{module_tag} Creating staging.dim_vehicle table.")
@@ -50,7 +74,7 @@ def load_dim_vehicle(filepath_in) -> None:
         )
         cursor.execute("TRUNCATE staging.dim_vehicle CASCADE;")
 
-        # bulk insert staging - radykalna konwersja typów
+        # bulk insert staging
         logger.info(f"{module_tag} Bulk inserting into staging.dim_vehicle.")
         records = (
             dim_vehicle[

@@ -4,8 +4,8 @@ import holidays
 
 
 def make_dim_date(
-    start_date: datetime.datetime = datetime.datetime(2016, 1, 1, 0, 0),
-    end_date: datetime.datetime = datetime.datetime(2021, 12, 31, 23, 0),
+    start_date: datetime.datetime = datetime.datetime(2013, 1, 1, 0, 0),
+    end_date: datetime.datetime = datetime.datetime(2025, 12, 31, 23, 0),
 ) -> pd.DataFrame:
     """
     Generate a dimension table for dates within the specified range.
