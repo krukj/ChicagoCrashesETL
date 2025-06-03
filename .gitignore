@@ -10,3 +10,6 @@ __pycache__/
 **/data/**/*
 !**/data/
 !**/data/**/
+data/tmp/transformed/removed/*
+!data/tmp/transformed/removed/.gitkeep
+.DS_Store
