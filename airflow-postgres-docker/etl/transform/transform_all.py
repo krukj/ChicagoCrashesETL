@@ -6,6 +6,8 @@ from .transform_person import transform_person
 from .make_dim_date import make_dim_date
 from .utils import generate_surrogate_key
 
+# from etl.utils import ensure_directories
+
 import os
 import datetime
 import pandas as pd
@@ -80,7 +82,6 @@ def perform_make_dim_date(
     return dim_date
 
 
-# To jest już do transformowanie pomiędzy nimi, nazywa się transform_all ale te funkcje z góry też trzeba będzie wykonywać
 def transform_all(
     df_fact_crash: pd.DataFrame,
     df_fact_weather: pd.DataFrame,
@@ -278,71 +279,3 @@ def transform_all(
         df_dim_location,
         df_dim_date,
     )
-
-
-def main():
-    base_dir = "/opt/airflow"
-
-    # source paths
-    crash_path_in = os.path.join(base_dir, "data", "tmp", "extracted", "crashes.pkl")
-    weather_path_in = os.path.join(base_dir, "data", "tmp", "extracted", "weather.pkl")
-    vehicles_path_in = os.path.join(
-        base_dir, "data", "tmp", "extracted", "vehicles.pkl"
-    )
-    person_path_in = os.path.join(base_dir, "data", "tmp", "extracted", "people.pkl")
-
-    # out paths
-    fact_crash_path = os.path.join(
-        base_dir, "data", "tmp", "transformed", "fact_crash.pkl"
-    )
-    dim_crash_info_path = os.path.join(
-        base_dir, "data", "tmp", "transformed", "dim_crash_info.pkl"
-    )
-    dim_location_path = os.path.join(
-        base_dir, "data", "tmp", "transformed", "dim_location.pkl"
-    )
-    fact_weather_path = os.path.join(
-        base_dir, "data", "tmp", "transformed", "fact_weather.pkl"
-    )
-    dim_vehicle_path = os.path.join(
-        base_dir, "data", "tmp", "transformed", "dim_vehicle.pkl"
-    )
-    dim_person_path = os.path.join(
-        base_dir, "data", "tmp", "transformed", "dim_people.pkl"
-    )
-    dim_date_path = os.path.join(base_dir, "data", "tmp", "transformed", "dim_date.pkl")
-
-    fact_crash, dim_crash_info, dim_location = perform_transformation_crash(
-        crash_path_in
-    )
-
-    fact_weather = perform_transformation_weather(weather_path_in)
-    dim_vehicle = perform_transformation_vehicles(vehicles_path_in)
-
-    dim_person = perform_transformation_person(person_path_in)
-
-    dim_date = perform_make_dim_date()
-
-    ### Teraz wszystko:
-    removed_path = os.path.join(base_dir, "data", "tmp", "transformed", "removed")
-    tables = transform_all(
-        df_fact_crash=fact_crash,
-        df_fact_weather=fact_weather,
-        df_dim_crash_info=dim_crash_info,
-        df_dim_person=dim_person,
-        df_dim_vehicle=dim_vehicle,
-        df_dim_location=dim_location,
-        df_dim_date=dim_date,
-        fact_crash_path_out=fact_crash_path,
-        fact_weather_path_out=fact_weather_path,
-        dim_crash_info_path_out=dim_crash_info_path,
-        dim_person_path_out=dim_person_path,
-        dim_vehicle_path_out=dim_vehicle_path,
-        dim_location_path_out=dim_location_path,
-        dim_date_path_out=dim_date_path,
-        removed_records_path=removed_path,
-    )
-
-
-if __name__ == "__main__":
-    main()
