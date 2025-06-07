@@ -4,7 +4,6 @@ import numpy as np
 import psycopg2.extras
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from etl.logging_config import setup_logger
-from etl.transform.utils import generate_surrogate_key
 
 logger = setup_logger(__name__)
 module_tag = "[dim_vehicle]"

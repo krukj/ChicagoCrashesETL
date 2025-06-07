@@ -58,8 +58,4 @@ def trasform_weather(filepath_in: str) -> pd.DataFrame:
             axis=1,
         ),
     )
-    # df.insert(0, "WEATHER_KEY", df.apply(
-    #     lambda row: generate_surrogate_key(row["date_id"])), axis=1
-    # )
-
     return df

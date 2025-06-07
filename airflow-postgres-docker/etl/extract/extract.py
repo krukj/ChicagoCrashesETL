@@ -6,7 +6,6 @@ from .schemas import (
 )
 from .utils import validate_columns, print_null_summary
 from etl.logging_config import setup_logger
-from etl.utils import ensure_directories
 
 import pandas as pd
 from pathlib import Path

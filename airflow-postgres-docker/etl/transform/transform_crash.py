@@ -8,7 +8,7 @@ from .schemas import (
     COLUMNS_TO_DIM_CRASH_INFO,
     COLUMNS_TO_DIM_LOCATION,
 )
-from .utils import fill_na, change_type, replace_value, generate_surrogate_key
+from .utils import fill_na, change_type, replace_value
 
 import pandas as pd
 from typing import Tuple

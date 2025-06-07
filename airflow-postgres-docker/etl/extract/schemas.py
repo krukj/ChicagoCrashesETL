@@ -97,7 +97,7 @@ EXPECTED_VEHICLES_COLUMNS = {
 # "CMRC_VEH_I",         # nulle
 "MAKE",
 "MODEL",
-# "LIC_PLATE_STATE",    # nie potrzebne
+# "LIC_PLATE_STATE",    # niepotrzebne
 "VEHICLE_YEAR",
 "VEHICLE_DEFECT",
 # "VEHICLE_TYPE",       # useless

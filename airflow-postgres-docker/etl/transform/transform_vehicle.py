@@ -22,7 +22,6 @@ def transform_vehicle(filepath_in: str) -> pd.DataFrame:
     df["OCCUPANT_CNT"] = df["OCCUPANT_CNT"] + 1
     df = change_type(df, COLUMNS_TO_INT_VEHICLES, "int64")
 
-    # Na szybko bo może zadziała (zrobić VEHICLE_ID jako CRASH_UNIT_ID bo to to samo)
     df["VEHICLE_ID"] = df["CRASH_UNIT_ID"].astype("int64")
 
     vehicle_key_cols = df.columns.to_list()
